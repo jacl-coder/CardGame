@@ -1,0 +1,31 @@
+{
+    "StackPosition": {
+        "x": 100,
+        "y": 200
+    },
+    "CurrentCardPosition": {
+        "x": 300,
+        "y": 200
+    },
+    "PlayfieldAreaOffset": {
+        "x": 0,
+        "y": 300
+    },
+    "StackCardOffset": 30.0,
+    "BackgroundColors": {
+        "Playfield": {
+            "r": 0.2,
+            "g": 0.4,
+            "b": 0.2,
+            "a": 0.3
+        },
+        "Stack": {
+            "r": 0.4,
+            "g": 0.2,
+            "b": 0.2,
+            "a": 0.3
+        }
+    },
+    "StackBackgroundWidthRatio": 0.3,
+    "StackBackgroundHeight": 200.0
+}

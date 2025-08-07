@@ -1,0 +1,31 @@
+{
+    "CardFonts": {
+        "BigNumber": {
+            "family": "Arial",
+            "size": 24
+        },
+        "SmallNumber": {
+            "family": "Arial",
+            "size": 12
+        },
+        "Suit": {
+            "family": "Arial",
+            "size": 16
+        },
+        "CardBack": {
+            "family": "Arial",
+            "size": 16,
+            "text": "CARD"
+        }
+    },
+    "UIFonts": {
+        "Title": {
+            "family": "Arial",
+            "size": 24
+        },
+        "Button": {
+            "family": "Arial",
+            "size": 18
+        }
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "MoveAnimationDuration": 0.3,
+    "FlipAnimationDuration": 0.2,
+    "ScaleAnimationDuration": 0.15,
+    "HighlightAnimationDuration": 0.1,
+    "HighlightScaleFactor": 1.1,
+    "ClickScaleFactor": 1.2
+}

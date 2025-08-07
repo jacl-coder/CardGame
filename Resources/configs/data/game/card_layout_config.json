@@ -1,0 +1,20 @@
+{
+    "CardLayout": {
+        "BigNumberPosition": {
+            "x": 0.5,
+            "y": 0.5
+        },
+        "SmallNumberPosition": {
+            "x": 0.08,
+            "y": 0.95
+        },
+        "SuitPosition": {
+            "x": 0.92,
+            "y": 0.95
+        },
+        "CardBackTextPosition": {
+            "x": 0.5,
+            "y": 0.5
+        }
+    }
+}

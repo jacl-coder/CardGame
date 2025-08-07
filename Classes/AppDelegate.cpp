@@ -23,7 +23,8 @@
  ****************************************************************************/
 
 #include "AppDelegate.h"
-#include "HelloWorldScene.h"
+#include "GameScene.h"
+#include "configs/loaders/ConfigManager.h"
 
 // #define USE_AUDIO_ENGINE 1
 // #define USE_SIMPLE_AUDIO_ENGINE 1
@@ -51,13 +52,16 @@ AppDelegate::AppDelegate()
 {
 }
 
-AppDelegate::~AppDelegate() 
+AppDelegate::~AppDelegate()
 {
 #if USE_AUDIO_ENGINE
     AudioEngine::end();
 #elif USE_SIMPLE_AUDIO_ENGINE
     SimpleAudioEngine::end();
 #endif
+
+    // 清理配置管理器
+    ConfigManager::destroyInstance();
 }
 
 // if you want a different context, modify the value of glContextAttrs
@@ -81,11 +85,31 @@ bool AppDelegate::applicationDidFinishLaunching() {
     // initialize director
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
+
+    // 初始化配置管理器
+    auto configManager = ConfigManager::getInstance();
+    if (!configManager->init()) {
+        CCLOG("AppDelegate::applicationDidFinishLaunching - Failed to initialize ConfigManager");
+        return false;
+    }
+
+    // 加载所有配置
+    if (!configManager->loadAllConfigs()) {
+        CCLOG("AppDelegate::applicationDidFinishLaunching - Failed to load configs, using defaults");
+    }
+
+    // 使用显示配置创建窗口
+    auto displayConfig = configManager->getDisplayConfig();
     if(!glview) {
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32) || (CC_TARGET_PLATFORM == CC_PLATFORM_MAC) || (CC_TARGET_PLATFORM == CC_PLATFORM_LINUX)
-        glview = GLViewImpl::createWithRect("CardGame", cocos2d::Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
+        auto designRes = displayConfig->getDesignResolution();
+        glview = GLViewImpl::createWithRect(
+            displayConfig->getWindowTitle().c_str(),
+            cocos2d::Rect(0, 0, designRes.width, designRes.height),
+            displayConfig->getWindowScale()
+        );
 #else
-        glview = GLViewImpl::create("CardGame");
+        glview = GLViewImpl::create(displayConfig->getWindowTitle().c_str());
 #endif
         director->setOpenGLView(glview);
     }
@@ -96,8 +120,9 @@ bool AppDelegate::applicationDidFinishLaunching() {
     // set FPS. the default value is 1.0/60 if you don't call this
     director->setAnimationInterval(1.0f / 60);
 
-    // Set the design resolution
-    glview->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height, ResolutionPolicy::NO_BORDER);
+    // Set the design resolution using config
+    auto designSize = displayConfig->getDesignResolutionSize();
+    glview->setDesignResolutionSize(designSize.width, designSize.height, displayConfig->getResolutionPolicyType());
     auto frameSize = glview->getFrameSize();
     // if the frame's height is larger than the height of medium size.
     if (frameSize.height > mediumResolutionSize.height)
@@ -118,7 +143,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     register_all_packages();
 
     // create a scene. it's an autorelease object
-    auto scene = HelloWorld::createScene();
+    auto scene = GameScene::createScene();
 
     // run
     director->runWithScene(scene);
