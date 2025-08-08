@@ -163,33 +163,12 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
         if (success) {
             // 如果有底牌区域，直接替换显示
             if (_currentCardArea) {
-                CCLOG("PlayFieldController - Before replacement:");
-                CCLOG("  _currentCardView: %p", _currentCardView);
-                CCLOG("  moving cardView: %p", cardView);
-                CCLOG("  cardView model: %s", cardView->getCardModel() ? cardView->getCardModel()->toString().c_str() : "null");
-                
-                // 打印底牌区域当前状态
-                CCLOG("  Current bottom card area children count: %zd", _currentCardArea->getChildrenCount());
-                const auto& children = _currentCardArea->getChildren();
-                for (size_t i = 0; i < children.size(); i++) {
-                    auto child = children.at(i);
-                    CCLOG("    Existing Child[%zu]: visible=%s, z-order=%d", i, 
-                          child->isVisible() ? "true" : "false", child->getLocalZOrder());
-                    auto childCardView = dynamic_cast<CardView*>(child);
-                    if (childCardView && childCardView->getCardModel()) {
-                        CCLOG("      Existing Card: %s", childCardView->getCardModel()->toString().c_str());
-                    }
-                }
-                
                 // 移除旧的底牌视图
                 if (_currentCardView && _currentCardView != cardView) {
-                    CCLOG("  Removing old _currentCardView: %p", _currentCardView);
                     _currentCardView->removeFromParent();
                 } else {
-                    CCLOG("  No old _currentCardView to remove (either null or same as moving card)");
                     // 清除底牌区域中的所有子视图
                     _currentCardArea->removeAllChildren();
-                    CCLOG("  Cleared all children from bottom card area");
                 }
                 
                 // 将新卡牌移入底牌区域
@@ -199,8 +178,9 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
                 
                 // 设置卡牌锚点为中心，然后放在区域中心
                 cardView->setAnchorPoint(Vec2(0.5f, 0.5f));
-                Size areaSize = _currentCardArea->getContentSize();
-                Vec2 centerPos = Vec2(areaSize.width * 0.5f, areaSize.height * 0.5f);
+                // 由于容器使用默认锚点(0,0)，卡牌使用中心锚点(0.5,0.5)
+                // 卡牌放在(0,0)位置就能在容器中心显示
+                Vec2 centerPos = Vec2(0, 0);
                 cardView->setPosition(centerPos);
                 
                 cardView->setVisible(true);
@@ -213,30 +193,10 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
                 auto stackTopCard = _gameModel->getCurrentCard();
                 if (stackTopCard) {
                     cardView->setCardModel(stackTopCard);
-                    CCLOG("PlayFieldController - Updated CardView model to stack top: %s", stackTopCard->toString().c_str());
-                }
-                
-                CCLOG("PlayFieldController - Replaced bottom card display");
-                
-                // 打印底牌区域显示信息
-                CCLOG("  Bottom card area children count: %zd", _currentCardArea->getChildrenCount());
-                const auto& finalChildren = _currentCardArea->getChildren();
-                for (size_t i = 0; i < finalChildren.size(); i++) {
-                    auto child = finalChildren.at(i);
-                    CCLOG("    Child[%zu]: visible=%s, z-order=%d", i, 
-                          child->isVisible() ? "true" : "false", child->getLocalZOrder());
-                    auto childCardView = dynamic_cast<CardView*>(child);
-                    if (childCardView && childCardView->getCardModel()) {
-                        CCLOG("      Card: %s", childCardView->getCardModel()->toString().c_str());
-                        // 强制刷新CardView显示
-                        childCardView->updateDisplay();
-                        CCLOG("      After updateDisplay - Card: %s", childCardView->getCardModel()->toString().c_str());
-                    }
                 }
             } else {
                 // 如果没有底牌区域，直接在overlay中替换
                 if (_currentCardView && _currentCardView != cardView) {
-                    CCLOG("PlayFieldController - Removing old current card view from overlay");
                     _currentCardView->removeFromParent();
                 }
                 
@@ -247,8 +207,6 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
                 cardView->setLocalZOrder(300); // 当前底牌层
                 cardView->setPosition(targetInOverlay);
                 cardView->setVisible(true);
-                CCLOG("PlayFieldController - Card kept in overlay at position: (%.2f, %.2f) with Z-order: 300 (fallback)", 
-                      targetInOverlay.x, targetInOverlay.y);
             }
             cardView->setEnabled(false); // 当前底牌不可点击
 
@@ -258,8 +216,6 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
             // 同步更新GameView的_currentCardView引用
             if (_gameView) {
                 _gameView->setCurrentCardView(cardView);
-                CCLOG("PlayFieldController - Synced GameView _currentCardView to new card: %s", 
-                      cardView->getCardModel() ? cardView->getCardModel()->toString().c_str() : "null");
             }
 
             // 从映射和列表中移除该卡视图，避免重复显示

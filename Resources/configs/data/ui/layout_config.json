@@ -1,11 +1,11 @@
 {
     "StackPosition": {
-        "x": 200,
-        "y": 150
+        "x": 300,
+        "y": 250
     },
     "CurrentCardPosition": {
-        "x": 600,
-        "y": 150
+        "x": 750,
+        "y": 250
     },
     "PlayfieldAreaOffset": {
         "x": 0,

@@ -41,6 +41,9 @@ bool CardView::initWithCardModel(std::shared_ptr<CardModel> cardModel) {
 
     _cardModel = cardModel;
 
+    // 设置卡牌节点的锚点为中心，使位置坐标表示卡牌中心
+    setAnchorPoint(Vec2(0.5f, 0.5f));
+
     // 获取配置管理器
     _configManager = ConfigManager::getInstance();
     if (!_configManager) {

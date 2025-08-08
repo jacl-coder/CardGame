@@ -121,7 +121,10 @@ void GameView::createPlayfieldArea(std::shared_ptr<LevelConfig> levelConfig,
     // 创建桌面牌区域节点
     _playfieldArea = Node::create();
     _playfieldArea->setContentSize(levelConfig->getPlayfieldSize());
-    _playfieldArea->setPosition(0, 300); // 放在屏幕上方
+    
+    // 使用配置中的桌面区域偏移位置
+    auto uiLayoutConfig = _configManager->getUILayoutConfig();
+    _playfieldArea->setPosition(uiLayoutConfig->getPlayfieldAreaOffset());
     addChild(_playfieldArea);
     
     // 根据配置创建桌面牌

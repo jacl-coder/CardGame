@@ -424,18 +424,14 @@ bool StackController::initialDealCurrentFromStack() {
                 Vec2 localPos = currentCardArea->convertToNodeSpace(currentPosition);
                 currentCardArea->addChild(topCardView, 300); // 当前底牌层
                 topCardView->setPosition(localPos);
-                CCLOG("  Re-added card to currentCardArea at local position: (%.2f, %.2f)", localPos.x, localPos.y);
             } else {
                 // 备用方案：直接添加到 GameView
                 overlayParent->addChild(topCardView, 300);
                 topCardView->setPosition(currentPosition);
-                CCLOG("  currentCardArea not found, added to GameView");
             }
             
             topCardView->setEnabled(false);
             _currentCardView = topCardView;
-
-            CCLOG("  Re-added card to GameView with Z-order 300");
             
             // 从映射与列表移除，避免重复显示
             _cardViewMap.erase(topCardId);
