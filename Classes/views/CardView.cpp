@@ -373,7 +373,13 @@ void CardView::updateCardFront() {
 }
 
 bool CardView::onTouchBegan(Touch* touch, Event* event) {
+    CCLOG("CardView::onTouchBegan - Card %s, enabled: %s, animating: %s",
+          _cardModel ? _cardModel->toString().c_str() : "null",
+          _isEnabled ? "true" : "false",
+          _isAnimating ? "true" : "false");
+          
     if (!_isEnabled || _isAnimating) {
+        CCLOG("CardView::onTouchBegan - Touch rejected (disabled or animating)");
         return false;
     }
 
@@ -385,13 +391,18 @@ bool CardView::onTouchBegan(Touch* touch, Event* event) {
     if (rect.containsPoint(locationInNode)) {
         // 播放按下效果
         playScaleAnimation(0.95f, 0.1f);
+        CCLOG("CardView::onTouchBegan - Touch accepted");
         return true;
     }
 
+    CCLOG("CardView::onTouchBegan - Touch outside card bounds");
     return false;
 }
 
 void CardView::onTouchEnded(Touch* touch, Event* event) {
+    CCLOG("CardView::onTouchEnded - Card %s",
+          _cardModel ? _cardModel->toString().c_str() : "null");
+          
     // 恢复正常大小
     playScaleAnimation(1.0f, 0.1f);
 
@@ -401,10 +412,15 @@ void CardView::onTouchEnded(Touch* touch, Event* event) {
     Rect rect = Rect(0, 0, cardSize.width, cardSize.height);
 
     if (rect.containsPoint(locationInNode)) {
+        CCLOG("CardView::onTouchEnded - Triggering click callback");
         // 触发点击回调
         if (_cardClickCallback) {
             _cardClickCallback(this, _cardModel);
+        } else {
+            CCLOG("CardView::onTouchEnded - No click callback set");
         }
+    } else {
+        CCLOG("CardView::onTouchEnded - Touch ended outside card bounds");
     }
 }
 

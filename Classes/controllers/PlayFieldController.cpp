@@ -64,7 +64,7 @@ bool PlayFieldController::initView(const std::vector<CardView*>& playfieldCardVi
 }
 
 bool PlayFieldController::handleCardClick(int cardId, const CardClickCallback& callback) {
-    if (!_isInitialized || _isProcessingClick) {
+    if (!_isInitialized) {
         CCLOG("PlayFieldController::handleCardClick - Controller not ready");
         if (callback) callback(false, nullptr);
         return false;
@@ -90,10 +90,8 @@ bool PlayFieldController::handleCardClick(int cardId, const CardClickCallback& c
         return false;
     }
     
-    // 执行替换操作
-    _isProcessingClick = true;
+    // 执行替换操作（允许并发）
     return replaceTrayWithPlayFieldCard(cardId, [this, callback, cardModel](bool success) {
-        _isProcessingClick = false;
         if (callback) callback(success, cardModel);
     });
 }

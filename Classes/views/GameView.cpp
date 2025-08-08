@@ -162,7 +162,10 @@ void GameView::createStackArea(std::shared_ptr<LevelConfig> levelConfig,
 
     // 使用配置中的手牌堆位置
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
-    _stackArea->setPosition(uiLayoutConfig->getStackPosition());
+    Vec2 stackPos = uiLayoutConfig->getStackPosition();
+    CCLOG("GameView::createStackArea - Stack position from config: (%.0f, %.0f)", stackPos.x, stackPos.y);
+    CCLOG("GameView::createStackArea - Stack card offset: %.0f", uiLayoutConfig->getStackCardOffset());
+    _stackArea->setPosition(stackPos);
     addChild(_stackArea);
 
     // 根据配置创建手牌堆（从底部到顶部）
