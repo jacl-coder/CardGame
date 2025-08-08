@@ -27,6 +27,20 @@ public:
         Color4F toColor4F() const { return Color4F(r, g, b, a); }
         Color3B toColor3B() const { return Color3B(r * 255, g * 255, b * 255); }
     };
+
+    /**
+     * 按钮配置结构
+     */
+    struct ButtonConfig {
+        Vec2 position;
+        Size size;
+        std::string text;
+        float fontSize;
+        
+        ButtonConfig() : position(Vec2::ZERO), size(Size::ZERO), text(""), fontSize(24.0f) {}
+        ButtonConfig(const Vec2& pos, const Size& sz, const std::string& txt, float fs)
+            : position(pos), size(sz), text(txt), fontSize(fs) {}
+    };
     
     /**
      * 构造函数
@@ -65,6 +79,10 @@ public:
     
     float getStackBackgroundHeight() const { return _stackBgHeight; }
     void setStackBackgroundHeight(float height) { _stackBgHeight = height; }
+
+    // 按钮配置
+    ButtonConfig getUndoButtonConfig() const { return _undoButtonConfig; }
+    void setUndoButtonConfig(const ButtonConfig& config) { _undoButtonConfig = config; }
     
     /**
      * 从JSON加载配置
@@ -113,6 +131,9 @@ private:
     // 背景尺寸配置
     float _stackBgWidthRatio;               // 手牌堆背景宽度比例
     float _stackBgHeight;                   // 手牌堆背景高度
+    
+    // 按钮配置
+    ButtonConfig _undoButtonConfig;         // 撤销按钮配置
     
     /**
      * 解析Vec2从JSON

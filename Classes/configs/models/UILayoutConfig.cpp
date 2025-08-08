@@ -23,6 +23,9 @@ void UILayoutConfig::resetToDefault() {
     // 默认背景尺寸配置
     _stackBgWidthRatio = 0.3f;
     _stackBgHeight = 200.0f;
+    
+    // 默认按钮配置
+    _undoButtonConfig = ButtonConfig(Vec2(100, 650), Size(120, 50), "回退", 24.0f);
 }
 
 bool UILayoutConfig::fromJson(const rapidjson::Value& json) {
@@ -69,6 +72,34 @@ bool UILayoutConfig::fromJson(const rapidjson::Value& json) {
     
     if (json.HasMember("StackBackgroundHeight") && json["StackBackgroundHeight"].IsNumber()) {
         _stackBgHeight = json["StackBackgroundHeight"].GetFloat();
+    }
+
+    // 解析按钮配置
+    if (json.HasMember("UndoButton") && json["UndoButton"].IsObject()) {
+        const rapidjson::Value& undoBtn = json["UndoButton"];
+        ButtonConfig config;
+        
+        if (undoBtn.HasMember("Position") && undoBtn["Position"].IsObject()) {
+            config.position = parseVec2FromJson(undoBtn["Position"]);
+        }
+        
+        if (undoBtn.HasMember("Size") && undoBtn["Size"].IsObject()) {
+            const rapidjson::Value& size = undoBtn["Size"];
+            if (size.HasMember("width") && size["width"].IsNumber() &&
+                size.HasMember("height") && size["height"].IsNumber()) {
+                config.size = Size(size["width"].GetFloat(), size["height"].GetFloat());
+            }
+        }
+        
+        if (undoBtn.HasMember("Text") && undoBtn["Text"].IsString()) {
+            config.text = undoBtn["Text"].GetString();
+        }
+        
+        if (undoBtn.HasMember("FontSize") && undoBtn["FontSize"].IsNumber()) {
+            config.fontSize = undoBtn["FontSize"].GetFloat();
+        }
+        
+        _undoButtonConfig = config;
     }
     
     return isValid();

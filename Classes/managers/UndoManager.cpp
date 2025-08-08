@@ -75,6 +75,20 @@ bool UndoManager::performUndo(const UndoCallback& callback) {
     CCLOG("UndoManager::performUndo - Performing undo: %s", 
           undoModel->getOperationSummary().c_str());
     
+    // 打印详细的撤销信息
+    auto sourceCard = undoModel->getSourceCard();
+    auto targetCard = undoModel->getTargetCard();
+    if (sourceCard) {
+        CCLOG("UndoManager::performUndo - Source card: %s, position: (%.0f, %.0f)",
+              sourceCard->toString().c_str(), 
+              undoModel->getSourcePosition().x, undoModel->getSourcePosition().y);
+    }
+    if (targetCard) {
+        CCLOG("UndoManager::performUndo - Target card: %s, position: (%.0f, %.0f)",
+              targetCard->toString().c_str(),
+              undoModel->getTargetPosition().x, undoModel->getTargetPosition().y);
+    }
+    
     // 应用撤销操作
     bool success = applyUndoToGameModel(undoModel);
     

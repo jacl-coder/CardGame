@@ -111,6 +111,12 @@ public:
      */
     UndoManager* getUndoManager() const { return _undoManager; }
 
+    /**
+     * 执行撤销操作
+     * @return 是否撤销成功
+     */
+    bool performUndo();
+
 protected:
     /**
      * 初始化各子控制器
@@ -166,6 +172,12 @@ protected:
      * 处理游戏失败
      */
     void handleGameLose();
+
+    /**
+     * 执行撤销动画
+     * @param undoModel 撤销操作模型
+     */
+    void performUndoAnimation(std::shared_ptr<UndoModel> undoModel);
 
 private:
     // 核心组件

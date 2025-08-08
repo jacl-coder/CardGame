@@ -284,11 +284,25 @@ bool StackController::recordUndoOperation(std::shared_ptr<CardModel> sourceCard,
     if (!_undoManager || !sourceCard || !targetCard) {
         return false;
     }
+
+    // 获取手牌堆区和底牌区的实际位置
+    Vec2 sourcePosition = sourceCard->getPosition();  // 手牌堆中的位置
+    Vec2 targetPosition = Vec2::ZERO;
+    
+    if (_configManager) {
+        auto uiConfig = _configManager->getUILayoutConfig();
+        if (uiConfig) {
+            targetPosition = uiConfig->getCurrentCardPosition();
+        }
+    }
+    
+    CCLOG("StackController::recordUndoOperation - Recording positions: source(%.0f,%.0f) -> target(%.0f,%.0f)",
+          sourcePosition.x, sourcePosition.y, targetPosition.x, targetPosition.y);
     
     // 创建撤销记录
     auto undoModel = UndoModel::createStackToCurrentAction(
         sourceCard, targetCard,
-        sourceCard->getPosition(), targetCard->getPosition()
+        sourcePosition, targetPosition
     );
     
     return _undoManager->recordUndo(undoModel);

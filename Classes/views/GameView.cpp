@@ -27,6 +27,7 @@ bool GameView::init() {
     _playfieldArea = nullptr;
     _stackArea = nullptr;
     _currentCardArea = nullptr;
+    _undoButton = nullptr;
 
     return true;
 }
@@ -50,6 +51,9 @@ bool GameView::initWithLevelConfig(std::shared_ptr<LevelConfig> levelConfig,
     
     // 创建背景
     createBackground(levelConfig);
+    
+    // 创建UI按钮
+    createUIButtons();
     
     // 创建各个区域
     createPlayfieldArea(levelConfig, gameModel);
@@ -208,7 +212,7 @@ void GameView::createCurrentCardArea(std::shared_ptr<GameModel> gameModel) {
     _currentCardArea->setName("currentCardArea"); // 设置名称，供CardView识别
     
     // 设置底牌区域的尺寸（足够容纳一张卡牌）
-    _currentCardArea->setContentSize(Size(182, 282)); // 比卡牌稍大一些
+    _currentCardArea->setContentSize(Size(182, 282)); // 标准卡牌尺寸
 
     // 使用配置中的底牌位置
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
@@ -277,4 +281,48 @@ void GameView::onCardClicked(CardView* cardView, std::shared_ptr<CardModel> card
     if (_cardClickCallback) {
         _cardClickCallback(cardView, cardModel);
     }
+}
+
+void GameView::createUIButtons() {
+    if (!_configManager) {
+        CCLOG("GameView::createUIButtons - ConfigManager not available");
+        return;
+    }
+
+    auto uiConfig = _configManager->getUILayoutConfig();
+    if (!uiConfig) {
+        CCLOG("GameView::createUIButtons - UILayoutConfig not available");
+        return;
+    }
+
+    // 获取回退按钮配置
+    auto undoConfig = uiConfig->getUndoButtonConfig();
+    
+    // 创建回退按钮标签
+    auto undoLabel = Label::createWithSystemFont(undoConfig.text, "Arial", undoConfig.fontSize);
+    undoLabel->setColor(Color3B::WHITE);
+    
+    // 创建回退按钮菜单项
+    _undoButton = MenuItemLabel::create(undoLabel, [this](Ref* sender) {
+        CCLOG("GameView::createUIButtons - Undo button clicked");
+        if (_undoCallback) {
+            _undoCallback();
+        }
+    });
+    
+    if (!_undoButton) {
+        CCLOG("GameView::createUIButtons - Failed to create undo button");
+        return;
+    }
+    
+    // 设置按钮位置
+    _undoButton->setPosition(undoConfig.position);
+    
+    // 创建菜单并添加按钮
+    auto menu = Menu::create(_undoButton, nullptr);
+    menu->setPosition(Vec2::ZERO);  // 菜单位置为(0,0)，子项位置为绝对位置
+    addChild(menu, 100);  // 设置较高的z-order确保在其他元素之上
+    
+    CCLOG("GameView::createUIButtons - Undo button created at (%.0f, %.0f)", 
+          undoConfig.position.x, undoConfig.position.y);
 }

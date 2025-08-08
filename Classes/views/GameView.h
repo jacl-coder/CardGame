@@ -88,6 +88,13 @@ public:
      */
     using CardClickCallback = std::function<void(CardView*, std::shared_ptr<CardModel>)>;
     void setCardClickCallback(const CardClickCallback& callback) { _cardClickCallback = callback; }
+
+    /**
+     * 设置回退按钮点击回调
+     * @param callback 回退回调函数
+     */
+    using UndoCallback = std::function<void()>;
+    void setUndoCallback(const UndoCallback& callback) { _undoCallback = callback; }
     
     /**
      * 播放卡牌移动动画
@@ -138,6 +145,11 @@ protected:
      * @param levelConfig 关卡配置
      */
     void createBackground(std::shared_ptr<LevelConfig> levelConfig);
+
+    /**
+     * 创建UI按钮
+     */
+    void createUIButtons();
     
     /**
      * 处理卡牌点击事件
@@ -162,6 +174,10 @@ private:
     
     // 回调函数
     CardClickCallback _cardClickCallback;
+    UndoCallback _undoCallback;
+    
+    // UI元素
+    MenuItemLabel* _undoButton;                     // 回退按钮
     
     // 配置管理器（不持有，只引用）
     ConfigManager* _configManager;

@@ -313,11 +313,24 @@ bool PlayFieldController::recordUndoOperation(std::shared_ptr<CardModel> sourceC
     if (!_undoManager || !sourceCard || !targetCard) {
         return false;
     }
+
+    // 获取底牌区的实际位置
+    Vec2 targetPosition = Vec2::ZERO;
+    if (_configManager) {
+        auto uiConfig = _configManager->getUILayoutConfig();
+        if (uiConfig) {
+            targetPosition = uiConfig->getCurrentCardPosition();
+        }
+    }
+    
+    CCLOG("PlayFieldController::recordUndoOperation - Recording positions: source(%.0f,%.0f) -> target(%.0f,%.0f)",
+          sourceCard->getPosition().x, sourceCard->getPosition().y,
+          targetPosition.x, targetPosition.y);
     
     // 创建撤销记录
     auto undoModel = UndoModel::createPlayfieldToCurrentAction(
         sourceCard, targetCard,
-        sourceCard->getPosition(), targetCard->getPosition()
+        sourceCard->getPosition(), targetPosition
     );
     
     return _undoManager->recordUndo(undoModel);

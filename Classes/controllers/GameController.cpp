@@ -175,6 +175,13 @@ bool GameController::initializeSubControllers() {
         onStackOperationPerformed(success, cardModel);
     });
 
+    // 设置回退按钮回调
+    if (_gameView) {
+        _gameView->setUndoCallback([this]() {
+            this->performUndo();
+        });
+    }
+
     CCLOG("GameController::initializeSubControllers - All sub controllers initialized");
     return true;
 }
@@ -281,5 +288,75 @@ void GameController::onStackOperationPerformed(bool success, std::shared_ptr<Car
         }
     } else {
         CCLOG("GameController::onStackOperationPerformed - Stack operation failed");
+    }
+}
+
+bool GameController::performUndo() {
+    CCLOG("GameController::performUndo - Undo operation requested");
+    
+    if (!_undoManager || !_gameModel) {
+        CCLOG("GameController::performUndo - UndoManager or GameModel not available");
+        return false;
+    }
+    
+    if (!_undoManager->canUndo()) {
+        CCLOG("GameController::performUndo - No undo operations available");
+        return false;
+    }
+    
+    CCLOG("GameController::performUndo - Current undo count: %d", _undoManager->getUndoCount());
+    CCLOG("GameController::performUndo - Performing undo operation");
+    
+    // 执行撤销操作
+    bool success = _undoManager->performUndo([this](bool undoSuccess, std::shared_ptr<UndoModel> undoModel) {
+        if (undoSuccess && undoModel) {
+            CCLOG("GameController::performUndo - Undo successful: %s", 
+                  undoModel->getOperationSummary().c_str());
+            
+            // 执行回退动画
+            this->performUndoAnimation(undoModel);
+            
+            // 更新显示
+            this->updateGameDisplay();
+        } else {
+            CCLOG("GameController::performUndo - Undo failed");
+        }
+    });
+    
+    return success;
+}
+
+void GameController::performUndoAnimation(std::shared_ptr<UndoModel> undoModel) {
+    if (!undoModel || !_gameView) {
+        CCLOG("GameController::performUndoAnimation - Invalid parameters");
+        return;
+    }
+    
+    CCLOG("GameController::performUndoAnimation - Starting animation for: %s", 
+          undoModel->getOperationSummary().c_str());
+    
+    // 根据撤销操作类型执行相应的动画
+    auto sourceCard = undoModel->getSourceCard();
+    auto targetCard = undoModel->getTargetCard();
+    
+    if (sourceCard) {
+        auto cardView = _gameView->getCardView(sourceCard->getCardId());
+        if (cardView) {
+            // 播放回退动画到原位置
+            Vec2 originalPos = undoModel->getSourcePosition();
+            CCLOG("GameController::performUndoAnimation - Moving card %s (ID:%d) back to (%.0f, %.0f)",
+                  sourceCard->toString().c_str(), sourceCard->getCardId(), originalPos.x, originalPos.y);
+            
+            _gameView->playCardMoveAnimation(cardView, originalPos, 0.5f, [this, sourceCard]() {
+                CCLOG("GameController::performUndoAnimation - Animation completed for card: %s", 
+                      sourceCard->toString().c_str());
+                // 动画完成后可以执行额外的逻辑
+            });
+        } else {
+            CCLOG("GameController::performUndoAnimation - CardView not found for card ID: %d", 
+                  sourceCard->getCardId());
+        }
+    } else {
+        CCLOG("GameController::performUndoAnimation - No source card in undo model");
     }
 }
