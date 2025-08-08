@@ -71,6 +71,18 @@ public:
     CardView* getCurrentCardView() const { return _currentCardView; }
     
     /**
+     * 设置当前底牌视图
+     * @param cardView 新的底牌视图
+     */
+    void setCurrentCardView(CardView* cardView) { _currentCardView = cardView; }
+    
+    /**
+     * 获取当前底牌区域节点
+     * @return 底牌区域节点
+     */
+    Node* getCurrentCardArea() const { return _currentCardArea; }
+    
+    /**
      * 设置卡牌点击回调
      * @param callback 点击回调函数
      */

@@ -60,6 +60,14 @@ public:
     std::shared_ptr<CardModel> getCurrentCard() const { return _currentCard; }
     void setCurrentCard(std::shared_ptr<CardModel> card) { _currentCard = card; }
     
+    // 底牌栈管理
+    const std::vector<std::shared_ptr<CardModel>>& getCurrentCardStack() const { return _currentCardStack; }
+    void pushCurrentCard(std::shared_ptr<CardModel> card);
+    std::shared_ptr<CardModel> popCurrentCard();
+    std::shared_ptr<CardModel> peekCurrentCard() const;
+    void clearCurrentCardStack();
+    bool isCurrentCardStackEmpty() const { return _currentCardStack.empty(); }
+    
     // 游戏统计
     int getScore() const { return _score; }
     void setScore(int score) { _score = score; }
@@ -135,6 +143,7 @@ private:
     std::vector<std::shared_ptr<CardModel>> _playfieldCards;       // 桌面牌区卡牌
     std::vector<std::shared_ptr<CardModel>> _stackCards;           // 手牌堆卡牌
     std::shared_ptr<CardModel> _currentCard;                       // 当前底牌
+    std::vector<std::shared_ptr<CardModel>> _currentCardStack;     // 底牌栈
     
     int _score;                                                     // 当前分数
     int _moveCount;                                                 // 移动次数

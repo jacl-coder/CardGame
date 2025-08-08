@@ -14,6 +14,9 @@
 
 USING_NS_CC;
 
+// 前向声明
+class GameView;
+
 /**
  * 桌面牌控制器
  * 负责处理桌面牌区域的所有逻辑，包括卡牌点击、匹配判断、移动动画等
@@ -113,6 +116,22 @@ public:
      * 更新显示
      */
     void updateDisplay();
+    
+    /**
+     * 提供当前底牌视图，用于执行收编为当前底牌显示视图的操作
+     */
+    void setCurrentCardView(CardView* current) { _currentCardView = current; }
+    CardView* getCurrentCardView() const { return _currentCardView; }
+    
+    /**
+     * 设置当前底牌区域节点，用于直接操作底牌区域
+     */
+    void setCurrentCardArea(Node* area) { _currentCardArea = area; }
+    
+    /**
+     * 设置GameView引用，用于同步更新底牌视图
+     */
+    void setGameView(GameView* gameView) { _gameView = gameView; }
 
 protected:
     /**
@@ -163,6 +182,11 @@ private:
     // 状态标志
     bool _isInitialized;                            // 是否已初始化
     bool _isProcessingClick;                        // 是否正在处理点击
+
+    // 新增：当前底牌相关引用（不拥有，仅引用）
+    CardView* _currentCardView = nullptr;
+    Node* _currentCardArea = nullptr;
+    GameView* _gameView = nullptr;
 };
 
 #endif // __PLAYFIELD_CONTROLLER_H__

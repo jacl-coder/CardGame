@@ -68,6 +68,36 @@ void GameModel::clearStackCards() {
     _stackCards.clear();
 }
 
+void GameModel::pushCurrentCard(std::shared_ptr<CardModel> card) {
+    if (card) {
+        _currentCardStack.push_back(card);
+        _currentCard = card; // 更新当前底牌为栈顶
+    }
+}
+
+std::shared_ptr<CardModel> GameModel::popCurrentCard() {
+    if (_currentCardStack.empty()) {
+        return nullptr;
+    }
+    
+    auto topCard = _currentCardStack.back();
+    _currentCardStack.pop_back();
+    
+    // 更新当前底牌为新的栈顶，如果栈为空则为nullptr
+    _currentCard = _currentCardStack.empty() ? nullptr : _currentCardStack.back();
+    
+    return topCard;
+}
+
+std::shared_ptr<CardModel> GameModel::peekCurrentCard() const {
+    return _currentCardStack.empty() ? nullptr : _currentCardStack.back();
+}
+
+void GameModel::clearCurrentCardStack() {
+    _currentCardStack.clear();
+    _currentCard = nullptr;
+}
+
 bool GameModel::hasMatchableCards() const {
     if (!_currentCard) {
         return false;

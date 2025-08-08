@@ -94,11 +94,12 @@ void CardView::setHighlighted(bool highlighted) {
 
 void CardView::setEnabled(bool enabled) {
     _isEnabled = enabled;
-    
-    // 更新视觉状态
-    Color3B color = enabled ? Color3B::WHITE : Color3B(128, 128, 128);
+    // 不再修改颜色，仅影响交互（onTouchBegan 中会判断）
+}
+
+void CardView::setDimmed(bool dimmed) {
     if (_cardBackground) {
-        _cardBackground->setColor(color);
+        _cardBackground->setColor(dimmed ? Color3B(128,128,128) : Color3B::WHITE);
     }
 }
 
@@ -186,8 +187,8 @@ void CardView::updateDisplay() {
         updateCardFront();
     }
 
-    // 更新位置
-    setPosition(_cardModel->getPosition());
+    // 暂时不更新位置，避免位置重置问题
+    // setPosition(_cardModel->getPosition());
 }
 
 void CardView::updateCardLayout() {

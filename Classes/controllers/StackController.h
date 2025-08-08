@@ -114,6 +114,16 @@ public:
      * 更新底牌显示
      */
     void updateCurrentCardDisplay();
+    
+    /**
+     * 更新当前底牌视图指针（不拥有，仅引用）
+     */
+    void setCurrentCardView(CardView* view) { _currentCardView = view; }
+
+    /**
+     * 游戏开始时：若需要，从备用牌堆顶部移动一张牌作为当前底牌（带动画，默认不记录撤销）
+     */
+    bool initialDealCurrentFromStack();
 
 protected:
     /**
@@ -163,6 +173,7 @@ private:
     // 状态标志
     bool _isInitialized;                            // 是否已初始化
     bool _isProcessingOperation;                    // 是否正在处理操作
+    bool _initialDealt;                             // 是否已执行过首发动画
 };
 
 #endif // __STACK_CONTROLLER_H__

@@ -52,6 +52,11 @@ public:
     void setEnabled(bool enabled);
     bool isEnabled() const { return _isEnabled; }
     
+    /**
+     * 独立控制是否以灰色显示（不影响交互开关）
+     */
+    void setDimmed(bool dimmed);
+
     // 动画方法
     /**
      * 播放移动动画

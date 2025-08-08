@@ -1,4 +1,5 @@
 #include "StackController.h"
+#include <algorithm>
 
 StackController::StackController()
     : _gameModel(nullptr)
@@ -6,7 +7,8 @@ StackController::StackController()
     , _configManager(nullptr)
     , _currentCardView(nullptr)
     , _isInitialized(false)
-    , _isProcessingOperation(false) {
+    , _isProcessingOperation(false)
+    , _initialDealt(false) {
 }
 
 StackController::~StackController() {
@@ -107,9 +109,6 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
         return false;
     }
     
-    // 按照README需求1：手牌区翻牌替换
-    // 点击手牌区♥A，♥A会平移（简单MoveTo）到手牌区的顶部牌（♣4）并替换它作为新的顶部牌
-    
     // 1. 记录撤销操作
     auto currentCard = _gameModel->getCurrentCard();
     if (!recordUndoOperation(topCard, currentCard)) {
@@ -118,18 +117,51 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
         return false;
     }
     
-    // 2. 更新model数据
-    _gameModel->setCurrentCard(topCard);
+    // 2. 更新model数据 - 使用栈结构
+    _gameModel->pushCurrentCard(topCard);
     
-    // 3. 执行动画：手牌移动到底牌位置
+    // 打印栈信息
+    const auto& stack = _gameModel->getCurrentCardStack();
+    CCLOG("StackController - Stack size after push: %zu", stack.size());
+    for (size_t i = 0; i < stack.size(); i++) {
+        CCLOG("  Stack[%zu]: %s", i, stack[i]->toString().c_str());
+    }
+    
+    // 3. 执行动画：顶部手牌移动到配置的底牌位置（不依赖 _currentCardView，避免悬挂指针）
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
-    playMoveAnimation(topCardView, uiLayoutConfig->getCurrentCardPosition(), [this, callback](bool success) {
+
+    cocos2d::Node* srcParent = topCardView->getParent();
+    // 选择 GameView 作为 overlayParent：stackArea 的父节点通常即 GameView
+    cocos2d::Node* overlayParent = (srcParent && srcParent->getParent()) ? srcParent->getParent() : srcParent;
+
+    cocos2d::Vec2 worldStart = srcParent->convertToWorldSpace(topCardView->getPosition());
+    // 目标直接使用配置坐标（GameView坐标）
+    cocos2d::Vec2 worldTarget = uiLayoutConfig->getCurrentCardPosition();
+
+    cocos2d::Vec2 startInOverlay = overlayParent->convertToNodeSpace(worldStart);
+    cocos2d::Vec2 targetInOverlay = overlayParent->convertToNodeSpace(worldTarget);
+
+    // 提升层级并移动，确保覆盖显示
+    topCardView->retain();
+    topCardView->removeFromParent();
+    overlayParent->addChild(topCardView, 500); // 动画层
+    topCardView->setPosition(startInOverlay);
+    topCardView->setEnabled(false); // 动画期间禁用交互
+
+    int topCardId = topCard->getCardId();
+
+    playMoveAnimation(topCardView, targetInOverlay, [this, callback, topCardId, topCardView](bool success) {
+        if (topCardView) {
+            topCardView->removeFromParent();
+            topCardView->release();
+        }
+
         if (success) {
-            // 动画完成后，翻开下一张手牌
             revealNextCard();
             updateStackInteractivity();
             updateCurrentCardDisplay();
         }
+
         if (callback) callback(success);
     });
     
@@ -213,10 +245,15 @@ void StackController::updateStackDisplay() {
 
 void StackController::updateCurrentCardDisplay() {
     if (_currentCardView && _gameModel) {
+        // 保存当前位置
+        Vec2 savedPosition = _currentCardView->getPosition();
+        
         auto currentCard = _gameModel->getCurrentCard();
         if (currentCard) {
             _currentCardView->setCardModel(currentCard);
-            _currentCardView->updateDisplay();
+            
+            // 恢复位置（因为 updateDisplay 会重置位置为模型位置）
+            _currentCardView->setPosition(savedPosition);
         }
     }
 }
@@ -291,4 +328,134 @@ void StackController::updateStackInteractivity() {
             cardView->setEnabled(isTopCard);
         }
     }
+}
+
+bool StackController::initialDealCurrentFromStack() {
+    CCLOG("StackController::initialDealCurrentFromStack - Starting initialization");
+    CCLOG("  _initialDealt: %s, _isInitialized: %s", 
+          _initialDealt ? "true" : "false", 
+          _isInitialized ? "true" : "false");
+    
+    if (_initialDealt || !_isInitialized) {
+        CCLOG("StackController::initialDealCurrentFromStack - Early return: already dealt or not initialized");
+        return false;
+    }
+
+    // 若已有当前底牌（栈不为空）则不执行
+    bool stackEmpty = _gameModel->isCurrentCardStackEmpty();
+    CCLOG("StackController::initialDealCurrentFromStack - Stack empty: %s", stackEmpty ? "true" : "false");
+    
+    if (!stackEmpty) {
+        CCLOG("StackController::initialDealCurrentFromStack - Stack not empty, skipping initialization");
+        const auto& stack = _gameModel->getCurrentCardStack();
+        CCLOG("  Current stack size: %zu", stack.size());
+        for (size_t i = 0; i < stack.size(); i++) {
+            CCLOG("    Stack[%zu]: %s", i, stack[i]->toString().c_str());
+        }
+        return false;
+    }
+
+    auto topCard = getTopCard();
+    auto topCardView = getTopCardView();
+    
+    CCLOG("StackController::initialDealCurrentFromStack - Top card: %s", 
+          topCard ? topCard->toString().c_str() : "null");
+    CCLOG("StackController::initialDealCurrentFromStack - Top card view: %p", topCardView);
+    
+    if (!topCard || !topCardView) {
+        CCLOG("StackController::initialDealCurrentFromStack - No top card or view available, aborting");
+        return false;
+    }
+
+    // 使用栈结构设置为当前底牌（不记录撤销）
+    _gameModel->pushCurrentCard(topCard);
+    CCLOG("StackController::initialDealCurrentFromStack - Pushed card to stack, now initializing animation");
+
+    auto uiLayoutConfig = _configManager->getUILayoutConfig();
+
+    // 计算动画坐标（提升到GameView层）
+    Node* srcParent = topCardView->getParent();
+    Node* overlayParent = (srcParent && srcParent->getParent()) ? srcParent->getParent() : srcParent;
+    
+    CCLOG("StackController::initialDealCurrentFromStack - Animation setup:");
+    CCLOG("  srcParent: %p, overlayParent: %p", srcParent, overlayParent);
+    
+    Vec2 worldStart = srcParent->convertToWorldSpace(topCardView->getPosition());
+    Vec2 worldTarget = uiLayoutConfig->getCurrentCardPosition();
+    Vec2 startInOverlay = overlayParent->convertToNodeSpace(worldStart);
+    Vec2 targetInOverlay = overlayParent->convertToNodeSpace(worldTarget);
+
+    CCLOG("  worldStart: (%.2f, %.2f), worldTarget: (%.2f, %.2f)", 
+          worldStart.x, worldStart.y, worldTarget.x, worldTarget.y);
+    CCLOG("  startInOverlay: (%.2f, %.2f), targetInOverlay: (%.2f, %.2f)", 
+          startInOverlay.x, startInOverlay.y, targetInOverlay.x, targetInOverlay.y);
+
+    // 提升层级，播放动画
+    topCardView->retain();
+    topCardView->removeFromParent();
+    overlayParent->addChild(topCardView, 500); // 动画层
+    topCardView->setPosition(startInOverlay);
+    topCardView->setEnabled(false);
+
+    CCLOG("StackController::initialDealCurrentFromStack - Starting animation from (%.2f, %.2f) to (%.2f, %.2f)", 
+          startInOverlay.x, startInOverlay.y, targetInOverlay.x, targetInOverlay.y);
+
+    int topCardId = topCard->getCardId();
+
+    playMoveAnimation(topCardView, targetInOverlay, [this, topCardView, topCardId, overlayParent](bool success){
+        CCLOG("StackController::initialDealCurrentFromStack - Animation callback called, success: %s", 
+              success ? "true" : "false");
+        
+        // 动画完成，卡牌已经在正确位置，需要保存位置并重新添加到父节点
+        if (success) {
+            topCardView->retain();
+            
+            // 保存当前位置（动画已经移动到的正确位置）
+            Vec2 currentPosition = topCardView->getPosition();
+            CCLOG("  Final card position: (%.2f, %.2f)", currentPosition.x, currentPosition.y);
+            
+            topCardView->removeFromParent();
+            
+            // 重新添加到 GameView 的 _currentCardArea
+            // 需要找到 currentCardArea 节点
+            Node* currentCardArea = overlayParent->getChildByName("currentCardArea");
+            if (currentCardArea) {
+                // 转换坐标到 currentCardArea 的本地坐标系
+                Vec2 localPos = currentCardArea->convertToNodeSpace(currentPosition);
+                currentCardArea->addChild(topCardView, 300); // 当前底牌层
+                topCardView->setPosition(localPos);
+                CCLOG("  Re-added card to currentCardArea at local position: (%.2f, %.2f)", localPos.x, localPos.y);
+            } else {
+                // 备用方案：直接添加到 GameView
+                overlayParent->addChild(topCardView, 300);
+                topCardView->setPosition(currentPosition);
+                CCLOG("  currentCardArea not found, added to GameView");
+            }
+            
+            topCardView->setEnabled(false);
+            _currentCardView = topCardView;
+
+            CCLOG("  Re-added card to GameView with Z-order 300");
+            
+            // 从映射与列表移除，避免重复显示
+            _cardViewMap.erase(topCardId);
+            auto it = std::find(_stackCardViews.begin(), _stackCardViews.end(), topCardView);
+            if (it != _stackCardViews.end()) _stackCardViews.erase(it);
+            topCardView->release();
+        } else {
+            CCLOG("  Animation failed, removing card");
+            topCardView->removeFromParent();
+        }
+        topCardView->release();
+
+        // 更新交互 & 翻开下一张
+        revealNextCard();
+        updateStackInteractivity();
+        updateCurrentCardDisplay();
+        
+        CCLOG("StackController::initialDealCurrentFromStack - Initialization complete");
+    });
+
+    _initialDealt = true;
+    return true;
 }

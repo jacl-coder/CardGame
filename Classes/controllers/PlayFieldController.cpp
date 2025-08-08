@@ -1,4 +1,6 @@
 #include "PlayFieldController.h"
+#include "../views/GameView.h"
+#include <algorithm>
 
 PlayFieldController::PlayFieldController()
     : _gameModel(nullptr)
@@ -112,11 +114,6 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
         return false;
     }
     
-    // 按照README要求执行：
-    // - 记录撤销操作
-    // - 更新model数据  
-    // - 调用相应的view执行动画
-    
     // 1. 记录撤销操作
     auto currentCard = _gameModel->getCurrentCard();
     if (!recordUndoOperation(cardModel, currentCard)) {
@@ -125,14 +122,162 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
         return false;
     }
     
-    // 2. 更新model数据
-    _gameModel->setCurrentCard(cardModel);
+    // 2. 更新model数据 - 使用栈结构
+    _gameModel->pushCurrentCard(cardModel);
     
-    // 3. 调用相应的view执行动画
-    // 使用配置中的底牌位置
+    // 打印栈信息
+    const auto& stack = _gameModel->getCurrentCardStack();
+    CCLOG("PlayFieldController - Stack size after push: %zu", stack.size());
+    for (size_t i = 0; i < stack.size(); i++) {
+        CCLOG("  Stack[%zu]: %s", i, stack[i]->toString().c_str());
+    }
+    CCLOG("  Current card (top): %s", 
+          _gameModel->getCurrentCard() ? _gameModel->getCurrentCard()->toString().c_str() : "null");
+    
+    // 3. 执行动画并替换底牌显示
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
-    Vec2 targetPosition = uiLayoutConfig->getCurrentCardPosition();
-    playMoveAnimation(cardView, targetPosition, callback);
+
+    cocos2d::Node* srcParent = cardView->getParent();
+    cocos2d::Node* dstParent = _currentCardView ? _currentCardView->getParent() : nullptr; // 当前底牌区域
+    cocos2d::Node* overlayParent = (dstParent && dstParent->getParent()) ? dstParent->getParent() : (srcParent && srcParent->getParent() ? srcParent->getParent() : srcParent);
+
+    cocos2d::Vec2 worldStart = srcParent->convertToWorldSpace(cardView->getPosition());
+    cocos2d::Vec2 worldTarget = dstParent
+        ? dstParent->convertToWorldSpace(_currentCardView->getPosition())
+        : uiLayoutConfig->getCurrentCardPosition();
+
+    cocos2d::Vec2 startInOverlay = overlayParent->convertToNodeSpace(worldStart);
+    cocos2d::Vec2 targetInOverlay = overlayParent->convertToNodeSpace(worldTarget);
+
+    // 提升层级并移动
+    cardView->retain();
+    cardView->removeFromParent();
+    overlayParent->addChild(cardView, 500); // 动画层
+    cardView->setPosition(startInOverlay);
+    cardView->setEnabled(false);
+
+    int movedCardId = cardModel->getCardId();
+
+    playMoveAnimation(cardView, targetInOverlay, [this, callback, movedCardId, cardView, overlayParent](bool success) {
+        // 动画结束后，替换底牌显示
+        if (success) {
+            // 如果有底牌区域，直接替换显示
+            if (_currentCardArea) {
+                CCLOG("PlayFieldController - Before replacement:");
+                CCLOG("  _currentCardView: %p", _currentCardView);
+                CCLOG("  moving cardView: %p", cardView);
+                CCLOG("  cardView model: %s", cardView->getCardModel() ? cardView->getCardModel()->toString().c_str() : "null");
+                
+                // 打印底牌区域当前状态
+                CCLOG("  Current bottom card area children count: %zd", _currentCardArea->getChildrenCount());
+                const auto& children = _currentCardArea->getChildren();
+                for (size_t i = 0; i < children.size(); i++) {
+                    auto child = children.at(i);
+                    CCLOG("    Existing Child[%zu]: visible=%s, z-order=%d", i, 
+                          child->isVisible() ? "true" : "false", child->getLocalZOrder());
+                    auto childCardView = dynamic_cast<CardView*>(child);
+                    if (childCardView && childCardView->getCardModel()) {
+                        CCLOG("      Existing Card: %s", childCardView->getCardModel()->toString().c_str());
+                    }
+                }
+                
+                // 移除旧的底牌视图
+                if (_currentCardView && _currentCardView != cardView) {
+                    CCLOG("  Removing old _currentCardView: %p", _currentCardView);
+                    _currentCardView->removeFromParent();
+                } else {
+                    CCLOG("  No old _currentCardView to remove (either null or same as moving card)");
+                    // 清除底牌区域中的所有子视图
+                    _currentCardArea->removeAllChildren();
+                    CCLOG("  Cleared all children from bottom card area");
+                }
+                
+                // 将新卡牌移入底牌区域
+                cardView->retain();
+                cardView->removeFromParent();
+                _currentCardArea->addChild(cardView, 300); // 当前底牌层
+                
+                // 设置卡牌锚点为中心，然后放在区域中心
+                cardView->setAnchorPoint(Vec2(0.5f, 0.5f));
+                Size areaSize = _currentCardArea->getContentSize();
+                Vec2 centerPos = Vec2(areaSize.width * 0.5f, areaSize.height * 0.5f);
+                cardView->setPosition(centerPos);
+                
+                cardView->setVisible(true);
+                cardView->release();
+                
+                // 强制设置为正面显示
+                cardView->setFlipped(true, false);
+                
+                // 更新CardView的模型为栈顶卡牌
+                auto stackTopCard = _gameModel->getCurrentCard();
+                if (stackTopCard) {
+                    cardView->setCardModel(stackTopCard);
+                    CCLOG("PlayFieldController - Updated CardView model to stack top: %s", stackTopCard->toString().c_str());
+                }
+                
+                CCLOG("PlayFieldController - Replaced bottom card display");
+                
+                // 打印底牌区域显示信息
+                CCLOG("  Bottom card area children count: %zd", _currentCardArea->getChildrenCount());
+                const auto& finalChildren = _currentCardArea->getChildren();
+                for (size_t i = 0; i < finalChildren.size(); i++) {
+                    auto child = finalChildren.at(i);
+                    CCLOG("    Child[%zu]: visible=%s, z-order=%d", i, 
+                          child->isVisible() ? "true" : "false", child->getLocalZOrder());
+                    auto childCardView = dynamic_cast<CardView*>(child);
+                    if (childCardView && childCardView->getCardModel()) {
+                        CCLOG("      Card: %s", childCardView->getCardModel()->toString().c_str());
+                        // 强制刷新CardView显示
+                        childCardView->updateDisplay();
+                        CCLOG("      After updateDisplay - Card: %s", childCardView->getCardModel()->toString().c_str());
+                    }
+                }
+            } else {
+                // 如果没有底牌区域，直接在overlay中替换
+                if (_currentCardView && _currentCardView != cardView) {
+                    CCLOG("PlayFieldController - Removing old current card view from overlay");
+                    _currentCardView->removeFromParent();
+                }
+                
+                auto uiLayoutConfig = _configManager->getUILayoutConfig();
+                Vec2 worldTarget = uiLayoutConfig->getCurrentCardPosition();
+                Vec2 targetInOverlay = overlayParent->convertToNodeSpace(worldTarget);
+                
+                cardView->setLocalZOrder(300); // 当前底牌层
+                cardView->setPosition(targetInOverlay);
+                cardView->setVisible(true);
+                CCLOG("PlayFieldController - Card kept in overlay at position: (%.2f, %.2f) with Z-order: 300 (fallback)", 
+                      targetInOverlay.x, targetInOverlay.y);
+            }
+            cardView->setEnabled(false); // 当前底牌不可点击
+
+            // 更新引用
+            _currentCardView = cardView;
+            
+            // 同步更新GameView的_currentCardView引用
+            if (_gameView) {
+                _gameView->setCurrentCardView(cardView);
+                CCLOG("PlayFieldController - Synced GameView _currentCardView to new card: %s", 
+                      cardView->getCardModel() ? cardView->getCardModel()->toString().c_str() : "null");
+            }
+
+            // 从映射和列表中移除该卡视图，避免重复显示
+            _cardViewMap.erase(movedCardId);
+            auto it = std::find(_playfieldCardViews.begin(), _playfieldCardViews.end(), cardView);
+            if (it != _playfieldCardViews.end()) _playfieldCardViews.erase(it);
+            
+            // 注意：不调用cardView->updateDisplay()，因为它会重置位置为model中的位置
+        } else {
+            // 失败时释放临时引用
+            cardView->removeFromParent();
+        }
+
+        // 释放 retain
+        cardView->release();
+
+        if (callback) callback(success);
+    });
     
     CCLOG("PlayFieldController::replaceTrayWithPlayFieldCard - Started replacement for card: %s", 
           cardModel->toString().c_str());

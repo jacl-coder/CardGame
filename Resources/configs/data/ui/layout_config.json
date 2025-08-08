@@ -1,31 +1,31 @@
 {
     "StackPosition": {
-        "x": 100,
-        "y": 200
+        "x": 200,
+        "y": 150
     },
     "CurrentCardPosition": {
-        "x": 300,
-        "y": 200
+        "x": 600,
+        "y": 150
     },
     "PlayfieldAreaOffset": {
         "x": 0,
-        "y": 300
+        "y": 580
     },
-    "StackCardOffset": 30.0,
+    "StackCardOffset": 80.0,
     "BackgroundColors": {
         "Playfield": {
-            "r": 0.2,
-            "g": 0.4,
-            "b": 0.2,
-            "a": 0.3
+            "r": 0.65,
+            "g": 0.45,
+            "b": 0.25,
+            "a": 0.85
         },
         "Stack": {
-            "r": 0.4,
-            "g": 0.2,
-            "b": 0.2,
-            "a": 0.3
+            "r": 0.55,
+            "g": 0.25,
+            "b": 0.65,
+            "a": 0.85
         }
     },
-    "StackBackgroundWidthRatio": 0.3,
-    "StackBackgroundHeight": 200.0
+    "StackBackgroundWidthRatio": 1.0,
+    "StackBackgroundHeight": 580.0
 }

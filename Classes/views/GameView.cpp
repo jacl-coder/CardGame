@@ -168,19 +168,14 @@ void GameView::createStackArea(std::shared_ptr<LevelConfig> levelConfig,
         const auto& cardModel = stackCards[i];
         auto cardView = CardView::create(cardModel);
         if (cardView) {
-            // 手牌堆中的卡牌层叠放置，只有顶部卡牌可见
-            // 使用配置中的卡牌间距
-            Vec2 cardPosition = Vec2(0, i * uiLayoutConfig->getStackCardOffset());
+            // 备用牌堆左右叠放（横向偏移），顶部卡在最右侧
+            Vec2 cardPosition = Vec2(i * uiLayoutConfig->getStackCardOffset(), 0);
             cardView->setPosition(cardPosition);
+            cardView->setLocalZOrder(static_cast<int>(i));
 
             // 只有顶部卡牌可以点击
             bool isTopCard = (i == stackCards.size() - 1);
             cardView->setEnabled(isTopCard);
-
-            // 非顶部卡牌翻到背面
-            if (!isTopCard) {
-                cardView->setFlipped(false, false);
-            }
 
             // 设置点击回调
             cardView->setCardClickCallback([this](CardView* view, std::shared_ptr<CardModel> model) {
@@ -204,28 +199,33 @@ void GameView::createCurrentCardArea(std::shared_ptr<GameModel> gameModel) {
 
     // 创建底牌区域节点
     _currentCardArea = Node::create();
+    _currentCardArea->setName("currentCardArea"); // 设置名称，供CardView识别
+    
+    // 设置底牌区域的尺寸（足够容纳一张卡牌）
+    _currentCardArea->setContentSize(Size(182, 282)); // 比卡牌稍大一些
 
     // 使用配置中的底牌位置
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
-    _currentCardArea->setPosition(uiLayoutConfig->getCurrentCardPosition());
-    addChild(_currentCardArea);
+    Vec2 currentCardPos = uiLayoutConfig->getCurrentCardPosition();
+    _currentCardArea->setPosition(currentCardPos);
+    
+    CCLOG("GameView::createCurrentCardArea - Setting position to: (%.2f, %.2f)", 
+          currentCardPos.x, currentCardPos.y);
+    
+    // 确保_currentCardArea在较高层级，不被背景遮挡
+    addChild(_currentCardArea, 100);
 
-    // 创建当前底牌
+    // 创建当前底牌 - 等待StackController的初始化
     auto currentCard = gameModel->getCurrentCard();
-    if (currentCard) {
-        _currentCardView = CardView::create(currentCard);
-        if (_currentCardView) {
-            _currentCardView->setPosition(Vec2::ZERO);
-
-            // 底牌通常不可点击（除非有特殊规则）
-            _currentCardView->setEnabled(false);
-
-            _currentCardArea->addChild(_currentCardView);
-            _cardViewMap[currentCard->getCardId()] = _currentCardView;
-
-            CCLOG("  Created current card: %s", currentCard->toString().c_str());
-        }
-    }
+    CCLOG("GameView::createCurrentCardArea - Current card from model: %s", 
+          currentCard ? currentCard->toString().c_str() : "null");
+    
+    // 检查底牌区域的初始状态
+    CCLOG("GameView::createCurrentCardArea - Initial bottom card area children count: %d", 
+          _currentCardArea->getChildrenCount());
+    
+    // 不在这里创建初始底牌，等待 StackController::initialDealCurrentFromStack()
+    CCLOG("GameView::createCurrentCardArea - Waiting for StackController to initialize bottom card");
 }
 
 void GameView::createBackground(std::shared_ptr<LevelConfig> levelConfig) {
@@ -248,7 +248,8 @@ void GameView::createBackground(std::shared_ptr<LevelConfig> levelConfig) {
                           Vec2(levelConfig->getStackSize().width * uiLayoutConfig->getStackBackgroundWidthRatio(),
                                uiLayoutConfig->getStackBackgroundHeight()),
                           uiLayoutConfig->getStackBackgroundColor().toColor4F());
-    stackBg->setPosition(uiLayoutConfig->getStackPosition());
+    // 背景固定从(0,0)开始
+    stackBg->setPosition(Vec2::ZERO);
     addChild(stackBg, -1);
 
     // 添加标题

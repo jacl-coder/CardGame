@@ -34,12 +34,6 @@ std::shared_ptr<GameModel> GameModelFromLevelGenerator::generateGameModel(std::s
         return nullptr;
     }
     
-    // 设置初始底牌
-    if (!setInitialCurrentCard(gameModel)) {
-        CCLOG("GameModelFromLevelGenerator::generateGameModel - Failed to set initial current card");
-        return nullptr;
-    }
-    
     // 设置游戏状态
     gameModel->setGameState(GameState::INITIALIZING);
     

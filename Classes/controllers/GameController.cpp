@@ -101,6 +101,11 @@ bool GameController::startGame(int levelId) {
     CCLOG("GameController::startGame - Game started successfully: %s",
           _levelConfig->getSummary().c_str());
 
+    // 新增：开场时发一张备用牌到当前底牌（带动画）
+    if (_stackController) {
+        _stackController->initialDealCurrentFromStack();
+    }
+
     return true;
 }
 
@@ -197,6 +202,15 @@ bool GameController::initializeSubControllerViews() {
         return false;
     }
 
+    // 新增：将当前底牌视图传给 PlayFieldController
+    _playfieldController->setCurrentCardView(_gameView->getCurrentCardView());
+    
+    // 新增：将当前底牌区域传给 PlayFieldController
+    _playfieldController->setCurrentCardArea(_gameView->getCurrentCardArea());
+    
+    // 新增：设置GameView引用，用于同步更新
+    _playfieldController->setGameView(_gameView);
+
     CCLOG("GameController::initializeSubControllerViews - All sub controller views initialized");
     return true;
 }
@@ -245,6 +259,11 @@ void GameController::onPlayFieldCardClicked(bool success, std::shared_ptr<CardMo
         // 检查胜利条件
         if (checkWinCondition()) {
             handleGameWin();
+        }
+
+        // 新增：同步 StackController 当前底牌视图，避免悬挂指针
+        if (_stackController && _playfieldController) {
+            _stackController->setCurrentCardView(_playfieldController->getCurrentCardView());
         }
     } else {
         CCLOG("GameController::onPlayFieldCardClicked - Playfield card operation failed");
