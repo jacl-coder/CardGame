@@ -12,12 +12,11 @@ std::shared_ptr<GameModel> GameModelFromLevelGenerator::generateGameModel(std::s
                                                                          bool shufflePlayfield,
                                                                          bool shuffleStack) {
     if (!validateLevelConfig(levelConfig)) {
-        CCLOG("GameModelFromLevelGenerator::generateGameModel - Invalid level config");
+    CCLOG("GameModelFromLevelGenerator::generateGameModel - Invalid level config");
         return nullptr;
     }
     
-    CCLOG("GameModelFromLevelGenerator::generateGameModel - Generating game model for: %s", 
-          levelConfig->getSummary().c_str());
+    // generating game model
     
     // 创建游戏模型
     auto gameModel = std::make_shared<GameModel>();
@@ -37,8 +36,7 @@ std::shared_ptr<GameModel> GameModelFromLevelGenerator::generateGameModel(std::s
     // 设置游戏状态
     gameModel->setGameState(GameState::INITIALIZING);
     
-    CCLOG("GameModelFromLevelGenerator::generateGameModel - %s", 
-          getGenerationSummary(gameModel).c_str());
+    // generation summary
     
     return gameModel;
 }
@@ -105,8 +103,7 @@ bool GameModelFromLevelGenerator::generatePlayfieldCards(std::shared_ptr<LevelCo
         gameModel->addPlayfieldCard(card);
     }
     
-    CCLOG("GameModelFromLevelGenerator::generatePlayfieldCards - Generated %zu playfield cards", 
-          playfieldCards.size());
+    // generated playfield cards
     
     return true;
 }
@@ -140,8 +137,7 @@ bool GameModelFromLevelGenerator::generateStackCards(std::shared_ptr<LevelConfig
         gameModel->addStackCard(card);
     }
     
-    CCLOG("GameModelFromLevelGenerator::generateStackCards - Generated %zu stack cards", 
-          stackCards.size());
+    // generated stack cards
     
     return true;
 }
@@ -167,8 +163,7 @@ bool GameModelFromLevelGenerator::setInitialCurrentCard(std::shared_ptr<GameMode
     
     gameModel->setCurrentCard(currentCard);
     
-    CCLOG("GameModelFromLevelGenerator::setInitialCurrentCard - Set initial current card: %s", 
-          currentCard->toString().c_str());
+    // set initial current card
     
     return true;
 }

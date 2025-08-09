@@ -91,76 +91,11 @@ bool GameScene::init()
     /////////////////////////////
     // 3. add your codes below...
 
-    // 测试配置系统（可选）
-    // testConfigSystem(); // 取消注释以查看配置系统测试
 
     // 初始化关卡选择UI（选择后再创建与加载游戏）
     initLevelSelectUI();
     initBackButtonUI();
 
-    // 注释掉测试卡牌，只显示游戏场景
-    /*
-    // 创建测试卡牌 - 使用更好的布局（保留作为对比）
-    auto cardModel1 = std::make_shared<CardModel>(CardFaceType::ACE, CardSuitType::HEARTS,
-                                                 Vec2(200, 600));
-    auto cardView1 = CardView::create(cardModel1);
-    cardView1->setCardClickCallback([](CardView* cardView, std::shared_ptr<CardModel> cardModel) {
-        CCLOG("Clicked card: %s", cardModel->toString().c_str());
-        // 测试翻牌动画
-        cardView->setFlipped(!cardView->isFlipped(), true);
-    });
-    this->addChild(cardView1);
-
-    auto cardModel2 = std::make_shared<CardModel>(CardFaceType::KING, CardSuitType::SPADES,
-                                                 Vec2(350, 600));
-    auto cardView2 = CardView::create(cardModel2);
-    cardView2->setCardClickCallback([cardView1](CardView* cardView, std::shared_ptr<CardModel> cardModel) {
-        CCLOG("Clicked card: %s", cardModel->toString().c_str());
-        // 测试移动动画
-        cardView->playMoveAnimation(Vec2(500, 700), 0.5f, []() {
-            CCLOG("Move animation completed!");
-        });
-    });
-    this->addChild(cardView2);
-
-    auto cardModel3 = std::make_shared<CardModel>(CardFaceType::FOUR, CardSuitType::CLUBS,
-                                                 Vec2(500, 600));
-    auto cardView3 = CardView::create(cardModel3);
-    cardView3->setCardClickCallback([](CardView* cardView, std::shared_ptr<CardModel> cardModel) {
-        CCLOG("Clicked card: %s", cardModel->toString().c_str());
-        // 测试高亮效果
-        cardView->setHighlighted(!cardView->isHighlighted());
-    });
-    this->addChild(cardView3);
-
-    // 添加一张方块Q测试红色卡牌
-    auto cardModel4 = std::make_shared<CardModel>(CardFaceType::QUEEN, CardSuitType::DIAMONDS,
-                                                 Vec2(650, 600));
-    auto cardView4 = CardView::create(cardModel4);
-    cardView4->setCardClickCallback([](CardView* cardView, std::shared_ptr<CardModel> cardModel) {
-        CCLOG("Clicked card: %s", cardModel->toString().c_str());
-        // 测试缩放动画
-        cardView->playScaleAnimation(1.2f, 0.2f);
-    });
-    this->addChild(cardView4);
-    */
-
-    // 隐藏测试说明标签，游戏场景有自己的标题
-    /*
-    // 添加说明标签
-    auto label = Label::createWithTTF("CardGame - Real Card Graphics Test\n♥A: Flip | ♠K: Move | ♣4: Highlight | ♦Q: Scale",
-                                     "fonts/Marker Felt.ttf", 18);
-    if (label == nullptr)
-    {
-        problemLoading("'fonts/Marker Felt.ttf'");
-    }
-    else
-    {
-        label->setPosition(Vec2(origin.x + visibleSize.width/2,
-                               origin.y + visibleSize.height - 100));
-        this->addChild(label, 1);
-    }
-    */
     return true;
 }
 

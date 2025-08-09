@@ -32,7 +32,7 @@ bool StackController::init(std::shared_ptr<GameModel> gameModel, UndoManager* un
 
     _isInitialized = true;
 
-    CCLOG("StackController::init - Initialized successfully");
+    
     return true;
 }
 
@@ -62,8 +62,7 @@ bool StackController::initView(const std::vector<CardView*>& stackCardViews, Car
     // 更新交互性
     updateStackInteractivity();
     
-    CCLOG("StackController::initView - Initialized %zu stack card views", 
-          _stackCardViews.size());
+    
     
     return true;
 }
@@ -82,8 +81,7 @@ bool StackController::handleTopCardClick(const StackOperationCallback& callback)
         return false;
     }
     
-    CCLOG("StackController::handleTopCardClick - Processing top card click: %s", 
-          topCard->toString().c_str());
+    
     
     // 执行替换操作（允许并发）
     return replaceCurrentWithTopCard([this, callback, topCard](bool success) {
@@ -118,13 +116,7 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
     // 2. 更新model数据 - 先添加到底牌栈（但不从手牌栈移除）
     _gameModel->pushCurrentCard(topCard);
     
-    // 打印栈信息
-    const auto& stack = _gameModel->getCurrentCardStack();
-    CCLOG("StackController - Stack size after push: %zu", stack.size());
-    for (size_t i = 0; i < stack.size(); i++) {
-        CCLOG("  Stack[%zu]: %s", i, stack[i]->toString().c_str());
-    }
-    CCLOG("StackController - Hand cards remaining (before animation): %zu", _gameModel->getStackCards().size());
+    // 栈信息（调试日志已移除）
     
     // 3. 执行动画：顶部手牌移动到配置的底牌位置（不依赖 _currentCardView，避免悬挂指针）
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
@@ -194,16 +186,14 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
         }
 
         if (success) {
-            // 模型与交互已在动画开始前更新，这里仅做显示层的后续处理
-            CCLOG("StackController - Hand cards remaining (after animation): %zu", _gameModel->getStackCards().size());
+            // 模型与交互已在动画开始前更新
             updateCurrentCardDisplay();
         }
 
         if (callback) callback(success);
     });
     
-    CCLOG("StackController::replaceCurrentWithTopCard - Started replacement with top card: %s", 
-          topCard->toString().c_str());
+    
     
     return true;
 }
@@ -230,7 +220,6 @@ bool StackController::revealNextCard() {
                 cardView->setFlipped(true, true); // 带动画翻牌
             }
             
-            CCLOG("StackController::revealNextCard - Revealed card: %s", card->toString().c_str());
             return true;
         }
     }
@@ -285,7 +274,7 @@ void StackController::updateCurrentCardDisplay() {
     // 这里我们通过回调机制通知GameController更新
     // 由于我们没有直接的回调，这里暂时留空
     // 实际的底牌更新应该在动画完成时由调用方处理
-    CCLOG("StackController::updateCurrentCardDisplay - Need external update");
+    
 }
 
 bool StackController::recordUndoOperation(std::shared_ptr<CardModel> sourceCard, 
@@ -320,8 +309,7 @@ bool StackController::recordUndoOperation(std::shared_ptr<CardModel> sourceCard,
         }
     }
     
-    CCLOG("StackController::recordUndoOperation - Recording positions: source(%.0f,%.0f) -> target(%.0f,%.0f)",
-          sourcePosition.x, sourcePosition.y, targetPosition.x, targetPosition.y);
+    
     
     // 创建撤销记录
     auto undoModel = UndoModel::createStackToCurrentAction(

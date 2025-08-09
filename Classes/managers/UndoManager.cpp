@@ -32,7 +32,7 @@ bool UndoManager::init(std::shared_ptr<GameModel> gameModel) {
 
     _isInitialized = true;
 
-    CCLOG("UndoManager::init - Initialized with max undo steps: %d", _maxUndoSteps);
+    // initialized with max undo steps
     return true;
 }
 
@@ -53,8 +53,7 @@ bool UndoManager::recordUndo(std::shared_ptr<UndoModel> undoModel) {
     // 清理超出限制的记录
     cleanupExcessUndoRecords();
     
-    CCLOG("UndoManager::recordUndo - Recorded undo operation: %s (Total: %d)", 
-          undoModel->getOperationSummary().c_str(), static_cast<int>(_undoStack.size()));
+    // recorded undo operation
     
     return true;
 }
@@ -72,8 +71,7 @@ bool UndoManager::performUndo(const UndoCallback& callback) {
     auto undoModel = _undoStack.back();
     _undoStack.pop_back();
     
-    CCLOG("UndoManager::performUndo - Performing undo: %s", 
-          undoModel->getOperationSummary().c_str());
+    // performing undo
     
     // 打印详细的撤销信息
     auto sourceCard = undoModel->getSourceCard();
@@ -96,8 +94,7 @@ bool UndoManager::performUndo(const UndoCallback& callback) {
         callback(success, undoModel);
     }
     
-    CCLOG("UndoManager::performUndo - Undo %s (Remaining: %d)", 
-          success ? "successful" : "failed", static_cast<int>(_undoStack.size()));
+    // undo result
     
     return success;
 }
@@ -112,7 +109,7 @@ int UndoManager::getUndoCount() const {
 
 void UndoManager::clearUndoHistory() {
     _undoStack.clear();
-    CCLOG("UndoManager::clearUndoHistory - Cleared all undo history");
+    // cleared undo history
 }
 
 void UndoManager::setMaxUndoSteps(int maxSteps) {
@@ -124,7 +121,7 @@ void UndoManager::setMaxUndoSteps(int maxSteps) {
     _maxUndoSteps = maxSteps;
     cleanupExcessUndoRecords();
     
-    CCLOG("UndoManager::setMaxUndoSteps - Set max undo steps to: %d", _maxUndoSteps);
+    // set max undo steps
 }
 
 std::shared_ptr<UndoModel> UndoManager::getLastUndoOperation() const {

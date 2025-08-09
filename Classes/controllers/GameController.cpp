@@ -44,7 +44,7 @@ bool GameController::init(GameView* gameView) {
     _undoManager = new UndoManager();
 
     _isInitialized = true;
-    CCLOG("GameController::init - Controller initialized successfully");
+    // controller initialized
 
     return true;
 }
@@ -55,7 +55,7 @@ bool GameController::startGame(int levelId) {
         return false;
     }
 
-    CCLOG("GameController::startGame - Starting level %d", levelId);
+    // starting level
 
     // 按照README要求的初始化流程：
 
@@ -98,8 +98,7 @@ bool GameController::startGame(int levelId) {
     // 设置游戏状态为进行中
     _gameModel->setGameState(GameState::PLAYING);
 
-    CCLOG("GameController::startGame - Game started successfully: %s",
-          _levelConfig->getSummary().c_str());
+    // game started
 
     // 新增：开场时发一张备用牌到当前底牌（带动画）
     if (_stackController) {
@@ -121,14 +120,14 @@ bool GameController::restartGame() {
 void GameController::pauseGame() {
     if (_gameModel) {
         _gameModel->setGameState(GameState::PAUSED);
-        CCLOG("GameController::pauseGame - Game paused");
+        // paused
     }
 }
 
 void GameController::resumeGame() {
     if (_gameModel) {
         _gameModel->setGameState(GameState::PLAYING);
-        CCLOG("GameController::resumeGame - Game resumed");
+        // resumed
     }
 }
 
@@ -182,7 +181,7 @@ bool GameController::initializeSubControllers() {
         });
     }
 
-    CCLOG("GameController::initializeSubControllers - All sub controllers initialized");
+    // sub controllers initialized
     return true;
 }
 
@@ -218,7 +217,7 @@ bool GameController::initializeSubControllerViews() {
     // 新增：设置GameView引用，用于同步更新
     _playfieldController->setGameView(_gameView);
 
-    CCLOG("GameController::initializeSubControllerViews - All sub controller views initialized");
+    // sub controller views initialized
     return true;
 }
 
@@ -247,21 +246,20 @@ bool GameController::checkWinCondition() {
 void GameController::handleGameWin() {
     if (_gameModel) {
         _gameModel->setGameState(GameState::WIN);
-        CCLOG("GameController::handleGameWin - Player won the game!");
+        // player won
     }
 }
 
 void GameController::handleGameLose() {
     if (_gameModel) {
         _gameModel->setGameState(GameState::GAME_OVER);
-        CCLOG("GameController::handleGameLose - Game over!");
+        // game over
     }
 }
 
 void GameController::onPlayFieldCardClicked(bool success, std::shared_ptr<CardModel> cardModel) {
     if (success) {
-        CCLOG("GameController::onPlayFieldCardClicked - Playfield card operation successful: %s",
-              cardModel ? cardModel->toString().c_str() : "Unknown");
+        // playfield op ok
 
         // 检查胜利条件
         if (checkWinCondition()) {
@@ -279,8 +277,7 @@ void GameController::onPlayFieldCardClicked(bool success, std::shared_ptr<CardMo
 
 void GameController::onStackOperationPerformed(bool success, std::shared_ptr<CardModel> cardModel) {
     if (success) {
-        CCLOG("GameController::onStackOperationPerformed - Stack operation successful: %s",
-              cardModel ? cardModel->toString().c_str() : "Unknown");
+        // stack op ok
 
         // 关键修复：更新底牌显示
         this->updateCurrentCardDisplay();
@@ -295,7 +292,7 @@ void GameController::onStackOperationPerformed(bool success, std::shared_ptr<Car
 }
 
 bool GameController::performUndo() {
-    CCLOG("GameController::performUndo - Undo operation requested");
+    // undo requested
     
     if (!_undoManager || !_gameModel) {
         CCLOG("GameController::performUndo - UndoManager or GameModel not available");
@@ -307,14 +304,12 @@ bool GameController::performUndo() {
         return false;
     }
     
-    CCLOG("GameController::performUndo - Current undo count: %d", _undoManager->getUndoCount());
-    CCLOG("GameController::performUndo - Performing undo operation");
+    // current undo count, performing
     
     // 执行撤销操作
     bool success = _undoManager->performUndo([this](bool undoSuccess, std::shared_ptr<UndoModel> undoModel) {
         if (undoSuccess && undoModel) {
-            CCLOG("GameController::performUndo - Undo successful: %s", 
-                  undoModel->getOperationSummary().c_str());
+            // undo ok
             
             // 执行回退动画
             this->performUndoAnimation(undoModel);
@@ -335,8 +330,7 @@ void GameController::performUndoAnimation(std::shared_ptr<UndoModel> undoModel) 
         return;
     }
     
-    CCLOG("GameController::performUndoAnimation - Starting animation for: %s", 
-          undoModel->getOperationSummary().c_str());
+    // start undo animation
     
     // 根据撤销操作类型执行相应的动画
     auto sourceCard = undoModel->getSourceCard();
@@ -370,35 +364,28 @@ void GameController::performPlayfieldCardUndoAnimation(std::shared_ptr<UndoModel
     }
     
     // === 关键调试信息 ===
-    CCLOG("=== 回退动画调试 START ===");
-    CCLOG("期望回退的卡牌: %s (ID:%d)", sourceCard->toString().c_str(), sourceCard->getCardId());
-    CCLOG("CurrentCardView对象地址: %p", currentCardView);
+    // debug start
     
     if (currentCardView) {
         auto cardModel = currentCardView->getCardModel();
         if (cardModel) {
-            CCLOG("CurrentCardView显示的卡牌: %s (ID:%d)", cardModel->toString().c_str(), cardModel->getCardId());
-            CCLOG("是否为同一张牌: %s", (cardModel->getCardId() == sourceCard->getCardId()) ? "YES" : "NO");
-            CCLOG("CardModel翻牌状态: %s", cardModel->isFlipped() ? "正面" : "背面");
-            CCLOG("CardView是否可见: %s", currentCardView->isVisible() ? "YES" : "NO");
+            // debug current card
         } else {
-            CCLOG("CurrentCardView没有CardModel!");
+            // no model
         }
     }
-    CCLOG("=== 回退动画调试 END ===");
+    // debug end
     
     // 强制确保CardView显示正确的卡牌内容
     currentCardView->setCardModel(sourceCard);
     currentCardView->updateDisplay();
     currentCardView->setFlipped(true, false); // 强制设置为正面显示
-    CCLOG("强制更新CardView显示为: %s", sourceCard->toString().c_str());
-    CCLOG("强制更新后的翻牌状态: %s", currentCardView->isFlipped() ? "正面" : "背面");
+    // forced update
     
     // 使用记录的世界坐标作为目标位置
     Vec2 worldTargetPos = undoModel->getSourcePosition(); // 这现在是正确的世界坐标
     
-    CCLOG("GameController::performPlayfieldCardUndoAnimation - Card: %s", sourceCard->toString().c_str());
-    CCLOG("  Target world position: (%.0f, %.0f)", worldTargetPos.x, worldTargetPos.y);
+    // target pos
     
     // 使用与现有动画完全相同的坐标转换方式
     Node* currentParent = currentCardView->getParent(); // 底牌区域
@@ -411,10 +398,7 @@ void GameController::performPlayfieldCardUndoAnimation(std::shared_ptr<UndoModel
     Vec2 startInGameView = gameViewNode->convertToNodeSpace(worldStart);
     Vec2 targetInGameView = gameViewNode->convertToNodeSpace(worldTarget);
     
-    CCLOG("  World start: (%.0f, %.0f) -> World target: (%.0f, %.0f)", 
-          worldStart.x, worldStart.y, worldTarget.x, worldTarget.y);
-    CCLOG("  GameView start: (%.0f, %.0f) -> GameView target: (%.0f, %.0f)", 
-          startInGameView.x, startInGameView.y, targetInGameView.x, targetInGameView.y);
+    // pos conversion
     
     // 提升层级进行动画（与PlayFieldController完全一致）
     currentCardView->retain();
@@ -425,12 +409,12 @@ void GameController::performPlayfieldCardUndoAnimation(std::shared_ptr<UndoModel
     
     // 立即更新底牌显示（在动画开始前，避免视觉冲突）
     this->updateCurrentCardDisplay();
-    CCLOG("已更新底牌显示，准备开始回退动画");
+    // updated current card display
     
     // 播放回退动画
     int originalZOrder = undoModel->getSourceZOrder();
     _gameView->playCardMoveAnimation(currentCardView, targetInGameView, 0.5f, [this, currentCardView, sourceCard, worldTargetPos, originalZOrder]() {
-        CCLOG("GameController::performPlayfieldCardUndoAnimation - Animation completed");
+        // animation completed
         
         // 动画完成后，恢复卡牌到桌面区域
         // 恢复到桌面时带回原始z序
@@ -458,10 +442,7 @@ void GameController::restoreCardToPlayfield(CardView* cardView, std::shared_ptr<
     // 将世界坐标转换为桌面区域的本地坐标（正确的坐标转换）
     Vec2 relativePos = playfieldArea->convertToNodeSpace(absolutePos);
     
-    CCLOG("GameController::restoreCardToPlayfield - Restoring card %s to playfield", 
-          cardModel->toString().c_str());
-    CCLOG("  Absolute pos: (%.0f, %.0f) -> Relative pos: (%.0f, %.0f), z:%d", 
-          absolutePos.x, absolutePos.y, relativePos.x, relativePos.y, originalZOrder);
+    // restoring card to playfield
     
     // 更新卡牌模型位置
     cardModel->setPosition(relativePos);
@@ -473,7 +454,7 @@ void GameController::restoreCardToPlayfield(CardView* cardView, std::shared_ptr<
     playfieldArea->addChild(cardView);
     // 恢复原始本地z序
     cardView->setLocalZOrder(originalZOrder);
-    CCLOG("GameController::restoreCardToPlayfield - Applied localZOrder: %d", originalZOrder);
+    // applied local z
     cardView->setPosition(relativePos);
     cardView->setEnabled(true); // 重新启用交互
     
@@ -487,10 +468,9 @@ void GameController::restoreCardToPlayfield(CardView* cardView, std::shared_ptr<
     // 关键修复：注册到PlayFieldController（这会设置正确的点击回调）
     if (_playfieldController) {
         _playfieldController->registerCardView(cardView);
-        CCLOG("GameController::restoreCardToPlayfield - Registered to PlayFieldController");
     }
     
-    CCLOG("GameController::restoreCardToPlayfield - Card restored to playfield successfully");
+    // restored
     cardView->release();
 }
 
@@ -509,8 +489,7 @@ void GameController::updateCurrentCardDisplay() {
         return;
     }
     
-    CCLOG("GameController::updateCurrentCardDisplay - Updating to show: %s", 
-          currentCard->toString().c_str());
+    // updating current card
     
     // 创建新的底牌视图
     auto newCurrentCardView = CardView::create(currentCard);
@@ -541,16 +520,15 @@ void GameController::updateCurrentCardDisplay() {
     // 关键修复：同步更新PlayFieldController的引用
     if (_playfieldController) {
         _playfieldController->setCurrentCardView(newCurrentCardView);
-        CCLOG("GameController::updateCurrentCardDisplay - Updated PlayFieldController current card reference");
     }
     
-    CCLOG("GameController::updateCurrentCardDisplay - Current card display updated successfully");
+    // updated
 }
 
 void GameController::performStackCardUndoAnimation(std::shared_ptr<UndoModel> undoModel) {
     auto sourceCard = undoModel->getSourceCard();
     
-    CCLOG("GameController::performStackCardUndoAnimation - Creating view for card: %s", sourceCard->toString().c_str());
+    // creating view for card
     
     // 为要回退的卡牌创建新的视图（因为模型已经更新，当前底牌视图已经是恢复后的底牌）
     auto cardViewToAnimate = CardView::create(sourceCard);
@@ -562,8 +540,7 @@ void GameController::performStackCardUndoAnimation(std::shared_ptr<UndoModel> un
     // 目标位置（手牌堆的绝对位置）
     Vec2 worldTargetPos = undoModel->getSourcePosition();
     
-    CCLOG("GameController::performStackCardUndoAnimation - Moving card %s back to stack", sourceCard->toString().c_str());
-    CCLOG("  Target world position: (%.0f, %.0f)", worldTargetPos.x, worldTargetPos.y);
+    // target pos
     
     // 获取底牌区域作为起始位置
     auto currentCardArea = _gameView->getCurrentCardArea();
@@ -582,10 +559,7 @@ void GameController::performStackCardUndoAnimation(std::shared_ptr<UndoModel> un
     Vec2 startInGameView = gameViewNode->convertToNodeSpace(worldStart);
     Vec2 targetInGameView = gameViewNode->convertToNodeSpace(worldTarget);
     
-    CCLOG("  World start: (%.0f, %.0f) -> World target: (%.0f, %.0f)", 
-          worldStart.x, worldStart.y, worldTarget.x, worldTarget.y);
-    CCLOG("  GameView start: (%.0f, %.0f) -> GameView target: (%.0f, %.0f)", 
-          startInGameView.x, startInGameView.y, targetInGameView.x, targetInGameView.y);
+    // pos conversion
     
     // 设置动画卡牌的初始状态和位置
     cardViewToAnimate->setFlipped(true, false); // 正面显示
@@ -597,11 +571,11 @@ void GameController::performStackCardUndoAnimation(std::shared_ptr<UndoModel> un
     
     // 立即更新底牌显示（在动画开始前，避免视觉冲突）
     this->updateCurrentCardDisplay();
-    CCLOG("已更新底牌显示，准备开始手牌回退动画");
+    // updated current card display
     
     // 播放回退动画
     _gameView->playCardMoveAnimation(cardViewToAnimate, targetInGameView, 0.5f, [this, cardViewToAnimate, worldTargetPos, sourceCard]() {
-        CCLOG("GameController::performStackCardUndoAnimation - Animation completed");
+        // animation completed
         
         // 动画完成后，将卡牌重新添加到手牌堆
         this->restoreCardToStack(cardViewToAnimate, sourceCard, worldTargetPos);
@@ -625,10 +599,7 @@ void GameController::restoreCardToStack(CardView* cardView, std::shared_ptr<Card
     // 将世界坐标转换为手牌堆区域的本地坐标
     Vec2 relativePos = stackArea->convertToNodeSpace(absolutePos);
     
-    CCLOG("GameController::restoreCardToStack - Restoring card %s to stack",
-          cardModel->toString().c_str());
-    CCLOG("  Absolute pos: (%.0f, %.0f) -> Relative pos: (%.0f, %.0f)",
-          absolutePos.x, absolutePos.y, relativePos.x, relativePos.y);
+    // restoring card to stack
     
     // 更新卡牌模型位置
     cardModel->setPosition(relativePos);
@@ -650,9 +621,8 @@ void GameController::restoreCardToStack(CardView* cardView, std::shared_ptr<Card
     // 关键修复：注册到StackController
     if (_stackController) {
         _stackController->registerCardView(cardView);
-        CCLOG("GameController::restoreCardToStack - Registered to StackController");
     }
     
-    CCLOG("GameController::restoreCardToStack - Card restored to stack successfully");
+    // restored
     cardView->release();
 }

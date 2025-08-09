@@ -31,7 +31,7 @@ bool PlayFieldController::init(std::shared_ptr<GameModel> gameModel, UndoManager
 
     _isInitialized = true;
 
-    CCLOG("PlayFieldController::init - Initialized successfully");
+    
     return true;
 }
 
@@ -57,8 +57,7 @@ bool PlayFieldController::initView(const std::vector<CardView*>& playfieldCardVi
         }
     }
     
-    CCLOG("PlayFieldController::initView - Initialized %zu playfield card views", 
-          _playfieldCardViews.size());
+    
     
     return true;
 }
@@ -80,12 +79,10 @@ bool PlayFieldController::handleCardClick(int cardId, const CardClickCallback& c
     
     auto cardModel = cardView->getCardModel();
     
-    CCLOG("PlayFieldController::handleCardClick - Processing click on card: %s", 
-          cardModel->toString().c_str());
+    
     
     // 检查卡片是否满足移动条件
     if (!checkMoveConditions(cardModel)) {
-        CCLOG("PlayFieldController::handleCardClick - Move conditions not met");
         if (callback) callback(false, cardModel);
         return false;
     }
@@ -125,12 +122,7 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
     
     // 打印栈信息
     const auto& stack = _gameModel->getCurrentCardStack();
-    CCLOG("PlayFieldController - Stack size after push: %zu", stack.size());
-    for (size_t i = 0; i < stack.size(); i++) {
-        CCLOG("  Stack[%zu]: %s", i, stack[i]->toString().c_str());
-    }
-    CCLOG("  Current card (top): %s", 
-          _gameModel->getCurrentCard() ? _gameModel->getCurrentCard()->toString().c_str() : "null");
+    // stack size and current card (verbose logs removed)
     
     // 3. 执行动画并替换底牌显示
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
@@ -360,8 +352,7 @@ bool PlayFieldController::recordUndoOperation(std::shared_ptr<CardModel> sourceC
         targetPosition = _configManager->getUILayoutConfig()->getCurrentCardPosition();
     }
     
-    CCLOG("PlayFieldController::recordUndoOperation - Recording world positions: source(%.0f,%.0f) -> target(%.0f,%.0f)",
-          sourcePosition.x, sourcePosition.y, targetPosition.x, targetPosition.y);
+    
     
     // 创建撤销记录
     auto undoModel = UndoModel::createPlayfieldToCurrentAction(
@@ -393,18 +384,16 @@ void PlayFieldController::onCardClicked(CardView* cardView, std::shared_ptr<Card
         return;
     }
     
-    CCLOG("PlayFieldController::onCardClicked - Card clicked: %s", cardModel->toString().c_str());
+    
     
     // 处理点击事件
     handleCardClick(cardModel->getCardId(), [this](bool success, std::shared_ptr<CardModel> card) {
         if (success) {
-            CCLOG("PlayFieldController::onCardClicked - Card move successful");
             // 通知外部回调
             if (_cardClickCallback) {
                 _cardClickCallback(true, card);
             }
         } else {
-            CCLOG("PlayFieldController::onCardClicked - Card move failed");
             if (_cardClickCallback) {
                 _cardClickCallback(false, card);
             }

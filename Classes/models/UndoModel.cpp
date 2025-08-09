@@ -33,18 +33,10 @@ std::shared_ptr<UndoModel> UndoModel::createStackToCurrentAction(
     
     if (sourceCard) {
         undoAction->setSourceFlippedState(sourceCard->isFlipped());
-        CCLOG("UndoModel::createStackToCurrentAction - Source card: %s at (%.0f, %.0f), flipped: %s",
-              sourceCard->toString().c_str(), sourcePos.x, sourcePos.y, 
-              sourceCard->isFlipped() ? "true" : "false");
     }
     if (targetCard) {
         undoAction->setTargetFlippedState(targetCard->isFlipped());
-        CCLOG("UndoModel::createStackToCurrentAction - Target card: %s at (%.0f, %.0f), flipped: %s",
-              targetCard->toString().c_str(), targetPos.x, targetPos.y,
-              targetCard->isFlipped() ? "true" : "false");
     }
-    
-    CCLOG("UndoModel::createStackToCurrentAction - Created STACK_OPERATION undo record, score delta: %d", scoreDelta);
     return undoAction;
 }
 
@@ -66,18 +58,10 @@ std::shared_ptr<UndoModel> UndoModel::createPlayfieldToCurrentAction(
     
     if (sourceCard) {
         undoAction->setSourceFlippedState(sourceCard->isFlipped());
-        CCLOG("UndoModel::createPlayfieldToCurrentAction - Source card: %s at (%.0f, %.0f), flipped: %s",
-              sourceCard->toString().c_str(), sourcePos.x, sourcePos.y,
-              sourceCard->isFlipped() ? "true" : "false");
     }
     if (targetCard) {
         undoAction->setTargetFlippedState(targetCard->isFlipped());
-        CCLOG("UndoModel::createPlayfieldToCurrentAction - Target card: %s at (%.0f, %.0f), flipped: %s",
-              targetCard->toString().c_str(), targetPos.x, targetPos.y,
-              targetCard->isFlipped() ? "true" : "false");
     }
-    
-    CCLOG("UndoModel::createPlayfieldToCurrentAction - Created CARD_MOVE undo record, score delta: %d", scoreDelta);
     return undoAction;
 }
 

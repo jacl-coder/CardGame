@@ -43,9 +43,6 @@ bool GameView::initWithLevelConfig(std::shared_ptr<LevelConfig> levelConfig,
         return false;
     }
     
-    CCLOG("GameView::initWithLevelConfig - Initializing with level: %s", 
-          levelConfig->getSummary().c_str());
-    
     // 清除现有内容
     clearAllCards();
     
@@ -60,8 +57,7 @@ bool GameView::initWithLevelConfig(std::shared_ptr<LevelConfig> levelConfig,
     createStackArea(levelConfig, gameModel);
     createCurrentCardArea(gameModel);
     
-    CCLOG("GameView::initWithLevelConfig - Layout complete. Playfield: %zu cards, Stack: %zu cards", 
-          _playfieldCardViews.size(), _stackCardViews.size());
+    // layout completed
     
     return true;
 }
@@ -75,9 +71,7 @@ void GameView::playCardMoveAnimation(CardView* cardView, const Vec2& targetPosit
                                     float duration, const std::function<void()>& callback) {
     if (!cardView) return;
     
-    CCLOG("GameView::playCardMoveAnimation - Moving card from (%.0f,%.0f) to (%.0f,%.0f)", 
-          cardView->getPosition().x, cardView->getPosition().y, 
-          targetPosition.x, targetPosition.y);
+    // play move animation
     
     cardView->playMoveAnimation(targetPosition, duration, callback);
 }
@@ -119,8 +113,7 @@ void GameView::clearAllCards() {
 
 void GameView::createPlayfieldArea(std::shared_ptr<LevelConfig> levelConfig, 
                                   std::shared_ptr<GameModel> gameModel) {
-    CCLOG("GameView::createPlayfieldArea - Creating playfield with %zu cards", 
-          levelConfig->getPlayfieldCards().size());
+    // create playfield area
     
     // 创建桌面牌区域节点
     _playfieldArea = Node::create();
@@ -151,19 +144,14 @@ void GameView::createPlayfieldArea(std::shared_ptr<LevelConfig> levelConfig,
             _playfieldCardViews.push_back(cardView);
             _cardViewMap[cardModel->getCardId()] = cardView;
             
-            CCLOG("  Created playfield card[%zu]: %s at (%.0f,%.0f), z:%d", 
-                  i,
-                  cardModel->toString().c_str(), 
-                  cardModel->getPosition().x, cardModel->getPosition().y,
-                  static_cast<int>(i));
+            // created playfield card
         }
     }
 }
 
 void GameView::createStackArea(std::shared_ptr<LevelConfig> levelConfig,
                               std::shared_ptr<GameModel> gameModel) {
-    CCLOG("GameView::createStackArea - Creating stack with %zu cards",
-          levelConfig->getStackCards().size());
+    // create stack area
 
     // 创建手牌堆区域节点
     _stackArea = Node::create();
@@ -172,8 +160,7 @@ void GameView::createStackArea(std::shared_ptr<LevelConfig> levelConfig,
     // 使用配置中的手牌堆位置
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
     Vec2 stackPos = uiLayoutConfig->getStackPosition();
-    CCLOG("GameView::createStackArea - Stack position from config: (%.0f, %.0f)", stackPos.x, stackPos.y);
-    CCLOG("GameView::createStackArea - Stack card offset: %.0f", uiLayoutConfig->getStackCardOffset());
+    // stack position and offset from config
     _stackArea->setPosition(stackPos);
     addChild(_stackArea);
 
@@ -201,16 +188,13 @@ void GameView::createStackArea(std::shared_ptr<LevelConfig> levelConfig,
             _stackCardViews.push_back(cardView);
             _cardViewMap[cardModel->getCardId()] = cardView;
 
-            CCLOG("  Created stack card %zu: %s at (%.0f,%.0f) %s",
-                  i, cardModel->toString().c_str(),
-                  cardPosition.x, cardPosition.y,
-                  isTopCard ? "(top)" : "(hidden)");
+            // created stack card
         }
     }
 }
 
 void GameView::createCurrentCardArea(std::shared_ptr<GameModel> gameModel) {
-    CCLOG("GameView::createCurrentCardArea - Creating current card area");
+    // create current card area
 
     // 创建底牌区域节点
     _currentCardArea = Node::create();
@@ -224,23 +208,20 @@ void GameView::createCurrentCardArea(std::shared_ptr<GameModel> gameModel) {
     Vec2 currentCardPos = uiLayoutConfig->getCurrentCardPosition();
     _currentCardArea->setPosition(currentCardPos);
     
-    CCLOG("GameView::createCurrentCardArea - Setting position to: (%.2f, %.2f)", 
-          currentCardPos.x, currentCardPos.y);
+    // set position
     
     // 确保_currentCardArea在较高层级，不被背景遮挡
     addChild(_currentCardArea, 100);
 
     // 创建当前底牌 - 等待StackController的初始化
     auto currentCard = gameModel->getCurrentCard();
-    CCLOG("GameView::createCurrentCardArea - Current card from model: %s", 
-          currentCard ? currentCard->toString().c_str() : "null");
+    // log current card
     
     // 检查底牌区域的初始状态
-    CCLOG("GameView::createCurrentCardArea - Initial bottom card area children count: %d", 
-          _currentCardArea->getChildrenCount());
+    // initial bottom card area children count
     
     // 不在这里创建初始底牌，等待 StackController::initialDealCurrentFromStack()
-    CCLOG("GameView::createCurrentCardArea - Waiting for StackController to initialize bottom card");
+    // wait for StackController to initialize bottom card
 }
 
 void GameView::createBackground(std::shared_ptr<LevelConfig> levelConfig) {
@@ -275,12 +256,11 @@ void GameView::createBackground(std::shared_ptr<LevelConfig> levelConfig) {
     titleLabel->setColor(Color3B::WHITE);
     addChild(titleLabel);
 
-    CCLOG("GameView::createBackground - Background created for level: %s",
-          levelConfig->getLevelName().c_str());
+    // background created
 }
 
 void GameView::onCardClicked(CardView* cardView, std::shared_ptr<CardModel> cardModel) {
-    CCLOG("GameView::onCardClicked - Card clicked: %s", cardModel->toString().c_str());
+    // card clicked
 
     // 转发给外部回调
     if (_cardClickCallback) {
@@ -309,7 +289,6 @@ void GameView::createUIButtons() {
     
     // 创建回退按钮菜单项
     _undoButton = MenuItemLabel::create(undoLabel, [this](Ref* sender) {
-        CCLOG("GameView::createUIButtons - Undo button clicked");
         if (_undoCallback) {
             _undoCallback();
         }
@@ -328,6 +307,5 @@ void GameView::createUIButtons() {
     menu->setPosition(Vec2::ZERO);  // 菜单位置为(0,0)，子项位置为绝对位置
     addChild(menu, 100);  // 设置较高的z-order确保在其他元素之上
     
-    CCLOG("GameView::createUIButtons - Undo button created at (%.0f, %.0f)", 
-          undoConfig.position.x, undoConfig.position.y);
+    // undo button created
 }

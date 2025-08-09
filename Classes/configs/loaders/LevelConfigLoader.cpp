@@ -14,7 +14,7 @@ std::shared_ptr<LevelConfig> LevelConfigLoader::loadLevelConfig(int levelId) {
     // 先检查缓存
     auto it = _cachedConfigs.find(levelId);
     if (it != _cachedConfigs.end()) {
-        CCLOG("LevelConfigLoader::loadLevelConfig - Found cached config for level %d", levelId);
+    // found cached config
         return it->second;
     }
     
@@ -33,7 +33,7 @@ std::shared_ptr<LevelConfig> LevelConfigLoader::loadLevelConfig(int levelId) {
 }
 
 std::shared_ptr<LevelConfig> LevelConfigLoader::loadLevelConfigFromFile(const std::string& filePath) {
-    CCLOG("LevelConfigLoader::loadLevelConfigFromFile - Loading from: %s", filePath.c_str());
+    // loading from file
     
     std::string content = readFileContent(filePath);
     if (content.empty()) {
@@ -68,14 +68,13 @@ std::shared_ptr<LevelConfig> LevelConfigLoader::loadLevelConfigFromString(const 
         return nullptr;
     }
     
-    CCLOG("LevelConfigLoader::loadLevelConfigFromString - Successfully loaded config: %s", 
-          config->getSummary().c_str());
+    // loaded config
     
     return config;
 }
 
 int LevelConfigLoader::preloadAllLevelConfigs(const std::string& configDirectory) {
-    CCLOG("LevelConfigLoader::preloadAllLevelConfigs - Preloading from: %s", configDirectory.c_str());
+    // preload from directory
     
     int loadedCount = 0;
     
@@ -87,7 +86,7 @@ int LevelConfigLoader::preloadAllLevelConfigs(const std::string& configDirectory
         }
     }
     
-    CCLOG("LevelConfigLoader::preloadAllLevelConfigs - Loaded %d levels", loadedCount);
+    // loaded count
     return loadedCount;
 }
 
@@ -98,7 +97,7 @@ std::shared_ptr<LevelConfig> LevelConfigLoader::getCachedLevelConfig(int levelId
 
 void LevelConfigLoader::clearCache() {
     _cachedConfigs.clear();
-    CCLOG("LevelConfigLoader::clearCache - Cache cleared");
+    // cache cleared
 }
 
 int LevelConfigLoader::getLoadedLevelCount() const {

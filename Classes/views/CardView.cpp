@@ -198,7 +198,7 @@ void CardView::updateCardLayout() {
     if (!_cardBackground) return;
 
     Size actualSize = _cardBackground->getContentSize();
-    CCLOG("Updating layout with actual size: %.0f x %.0f", actualSize.width, actualSize.height);
+    // layout with actual size
 
     // 更新节点内容尺寸
     if (_cardFront) {
@@ -216,21 +216,21 @@ void CardView::updateCardLayout() {
         // 大数字位置使用配置
         Vec2 bigPos = cardLayoutConfig->getBigNumberAbsolutePosition(actualSize);
         _bigNumberSprite->setPosition(bigPos);
-        CCLOG("Big number position: %.0f, %.0f", bigPos.x, bigPos.y);
+        // big number position
     }
 
     if (_smallNumberSprite) {
         // 小数字位置使用配置
         Vec2 smallPos = cardLayoutConfig->getSmallNumberAbsolutePosition(actualSize);
         _smallNumberSprite->setPosition(smallPos);
-        CCLOG("Small number position: %.0f, %.0f", smallPos.x, smallPos.y);
+        // small number position
     }
 
     if (_suitSprite) {
         // 花色位置使用配置
         Vec2 suitPos = cardLayoutConfig->getSuitAbsolutePosition(actualSize);
         _suitSprite->setPosition(suitPos);
-        CCLOG("Suit position: %.0f, %.0f", suitPos.x, suitPos.y);
+        // suit position
     }
 
     // 更新背面标签位置
@@ -267,7 +267,7 @@ void CardView::createCardBackground() {
         _cardBackground->setPosition(actualSize.width * 0.5f, actualSize.height * 0.5f);
         addChild(_cardBackground);
 
-        CCLOG("Card actual size: %.0f x %.0f", actualSize.width, actualSize.height);
+        // card actual size
     } else {
         // 如果图片加载失败，创建简单的矩形背景
         Size defaultSize = Size(100, 140);
@@ -373,13 +373,10 @@ void CardView::updateCardFront() {
 }
 
 bool CardView::onTouchBegan(Touch* touch, Event* event) {
-    CCLOG("CardView::onTouchBegan - Card %s, enabled: %s, animating: %s",
-          _cardModel ? _cardModel->toString().c_str() : "null",
-          _isEnabled ? "true" : "false",
-          _isAnimating ? "true" : "false");
+    // touch began
           
     if (!_isEnabled || _isAnimating) {
-        CCLOG("CardView::onTouchBegan - Touch rejected (disabled or animating)");
+        // touch rejected
         return false;
     }
 
@@ -391,17 +388,16 @@ bool CardView::onTouchBegan(Touch* touch, Event* event) {
     if (rect.containsPoint(locationInNode)) {
         // 播放按下效果
         playScaleAnimation(0.95f, 0.1f);
-        CCLOG("CardView::onTouchBegan - Touch accepted");
+        // touch accepted
         return true;
     }
 
-    CCLOG("CardView::onTouchBegan - Touch outside card bounds");
+    // touch outside bounds
     return false;
 }
 
 void CardView::onTouchEnded(Touch* touch, Event* event) {
-    CCLOG("CardView::onTouchEnded - Card %s",
-          _cardModel ? _cardModel->toString().c_str() : "null");
+    // touch ended
           
     // 恢复正常大小
     playScaleAnimation(1.0f, 0.1f);
@@ -412,15 +408,15 @@ void CardView::onTouchEnded(Touch* touch, Event* event) {
     Rect rect = Rect(0, 0, cardSize.width, cardSize.height);
 
     if (rect.containsPoint(locationInNode)) {
-        CCLOG("CardView::onTouchEnded - Triggering click callback");
+        // triggering click callback
         // 触发点击回调
         if (_cardClickCallback) {
             _cardClickCallback(this, _cardModel);
         } else {
-            CCLOG("CardView::onTouchEnded - No click callback set");
+            // no click callback set
         }
     } else {
-        CCLOG("CardView::onTouchEnded - Touch ended outside card bounds");
+        // touch ended outside
     }
 }
 
