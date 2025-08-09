@@ -32,8 +32,7 @@
 # ===== #
 # Cocos #
 # ===== #
-# Cocos2d-x engine directory
-cocos2d/
+# 保留 cocos2d/ 到仓库，方便他人直接克隆构建（不要忽略该目录）
 
 # Build results
 [Dd]ebug/
@@ -253,9 +252,18 @@ yarn-error.log*
 # ================== #
 # Project Specific  #
 # ================== #
-# Add your custom ignores here
+# 仅保留 Windows 工程，忽略其它平台工程
+proj.*/
+!proj.win32/
+
+# 自定义忽略
 config.local.*
 *.secret
 .env
 .env.local
 .env.*.local
+
+# Windows 额外构建输出（可选）
+proj.win32/Debug.win32/
+proj.win32/Release.win32/
+build-vs/

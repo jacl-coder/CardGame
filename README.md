@@ -1,313 +1,68 @@
-纸牌程序设计【需求一】 4-1
-一、需求概述
-1. 主玩法基础逻辑
-初始有一张底牌，需要与主牌区的牌匹配消除 
+## 项目说明（程序设计文档）
 
-2. 区域分布
-![alt text](image.png)
-纸牌区
-	•主牌堆：
-￮主游戏区域显示待消除的牌面
-￮所有纸牌呈现翻开或覆盖状态，翻开的牌可直接操作，覆盖状态需消除上方牌后才能翻开。
-![alt text](image-1.png)
-	
-	•底牌堆：
-￮用于接收符合规则的纸牌（数字比当前牌面数字大或小1）。
-￮初始底牌为一张翻开的备用牌。
-![alt text](image-2.png)
-	
-	•备用牌堆：
-￮玩家可从备用牌堆抽取新牌补充底牌堆，直到备用牌耗尽。
-![alt text](image-3.png)
-	
-3. 消除规则
-消除规则	截图视频	备注
-1.选择主牌堆中翻开的纸牌，点击主牌堆中的牌和底牌匹配
-￮数字必须比底牌数字大或小1。
-￮如底牌为“8”，可匹配“7”或“9”。
-2.纸牌消除无花色限制。
-3.当主牌堆中无可匹配消除的纸牌时，玩家可以从备用牌翻张新牌。	
-	[完整游戏操作.mp4]
-完整游戏过程
-	
-二、任务实现需求
-实现一个简单普通点击匹配以及回退功能；
-![alt text](image-4.png)
+本工程是一个使用 Cocos2d-x 的纸牌游戏，仓库包含引擎源码 `cocos2d/` 与 Windows 工程 `proj.win32/`，可在 VS2022 下开箱即用。
 
-1. 需求
-1.需求1：手牌区翻牌替换
-•点击手牌区♥A，♥A会平移（简单MoveTo）到手牌区的顶部牌（♣4）并替换它作为新的顶部牌
-2.需求2：桌面牌和手牌区顶部牌匹配
-•点击桌面牌的♦️3，卡牌会和手牌区顶部的♣4进行匹配【桌面牌区的牌只要和手牌区顶部牌点数差1就可以匹配，无花色要求】，点击的桌面牌（♦️3）会平移到手牌区的顶部牌（♣4）并替换它作为新的手牌区的顶部牌
-3.需求3：回退功能
-场景：点击♦️3 -> 点击♥A -> 点击♠2 后；连续多次点击 回退按钮 ，各卡牌需要反着平移（简单MoveTo）到原位置；直到无回退记录可回退；
-2. 开发环境及要求
-1.开发环境：cocos2dx 3.17
-2.要求：
-￮代码结构请借鉴并尽可能遵循程 三、序设计架构要求；达到代码结构可维护性和可扩展性。
-￮如有程序设计文档交付更好；在文档里能将清楚在你的代码结构下未来怎么新加一个卡牌和一个新类型的回退功能是加分项
-￮代码结构和程序文档的更好的交付决定未来可以承接的需求量
-3. 细节说明以及资源文件
-1.设计分辨率：1080*2080；窗口大小 1080*2080
-Plain Text
-glview = GLViewImpl::createWithRect("Test", cocos2d::Rect(0, 0, 1080, 2080), 0.5);
-glview->setDesignResolutionSize(1080, 2080, ResolutionPolicy::FIXED_WIDTH);
-2.主牌区和卡堆尺寸
-￮主牌区尺寸：1080*1500
-￮堆牌去尺寸: 1080*580
-3.关卡配置文件
-Plain Text
-{
-    "Playfield": [
-        {
-            "CardFace": 12,
-            "CardSuit": 0,
-            "Position": {"x": 250, "y": 1000}
-        },
-        {
-            "CardFace": 2,
-            "CardSuit": 0,
-            "Position": {"x": 300, "y": 800}
-        },
-        {
-            "CardFace": 2,
-            "CardSuit": 1,
-            "Position": {"x": 350, "y": 600
-            }
-        },
-        {
-            "CardFace": 2,
-            "CardSuit": 0,
-            "Position": {"x": 850, "y": 1000}
-        },
-        {
-            "CardFace": 2,
-            "CardSuit": 0,
-            "Position": {"x": 800, "y": 800}
-        },
-        {
-            "CardFace": 1,
-            "CardSuit": 3,
-            "Position": {"x": 750, "y": 600}
-        }
-    ],
-    "Stack": [
-        {
-            "CardFace": 2,
-            "CardSuit": 0,
-            "Position": {"x": 0, "y": 0}
-        },
-        {
-            "CardFace": 0,
-            "CardSuit": 2,
-            "Position": {"x": 0, "y": 0}
-        },
-        {
-            "CardFace": 3,
-            "CardSuit": 0,
-            "Position": {"x": 0, "y": 0}
-        }
-    ]
-}
+### 架构概览
+- **模型层（Models）**：`Classes/models/`
+  - `CardModel`：描述卡牌（花色、点数、位置、翻面、ID 等）。
+  - `GameModel`：描述整体游戏状态（桌面牌、手牌堆、底牌、分数、移动次数、关卡等），并提供撤销操作的实际应用方法：`undoCardMove`、`undoCardFlip`、`undoStackOperation`。
+  - `UndoModel`：记录一次可撤销操作的数据；`UndoOperationType` 枚举当前支持 `CARD_MOVE`/`CARD_FLIP`/`STACK_OPERATION`。
+- **控制层（Controllers）**：`Classes/controllers/`
+  - `GameController`：总控，负责关卡加载、模型生成、子控制器/视图初始化与整体流程（含 `performUndo`）。
+  - `PlayFieldController`：桌面牌逻辑与交互（点击、匹配、动画、撤销记录）。
+  - `StackController`：手牌堆逻辑与交互（翻牌、替换底牌、动画、撤销记录）。
+- **视图层（Views）**：`Classes/views/`
+  - `GameView`：主视图，持有各区域节点与 `CardView` 列表，转发点击/回退等交互。
+  - `CardView`：单张卡牌的渲染、触摸与动画，绑定一个 `CardModel`。
+- **配置与生成（Configs/Services）**：`Classes/configs` 与 `Classes/services`
+  - `ConfigManager` 统一加载字体、UI、规则、布局、显示配置；`GameModelFromLevelGenerator` 根据关卡配置生成初始 `GameModel`。
+- **管理器（Managers）**：
+  - `UndoManager`：维护撤销栈，提供 `recordUndo`、`performUndo`、`canUndo`、`getUndoSummary` 等。
 
-thrift
-// 花色类型
-enum CardSuitType
-{
-    CST_NONE = -1,
-    CST_CLUBS,      // 梅花
-    CST_DIAMONDS,   // 方块
-    CST_HEARTS,     // 红桃
-    CST_SPADES,     // 黑桃
-    CST_NUM_CARD_SUIT_TYPES
-};
+数据流与依赖关系简述：`GameController` 协调 `GameView` 与各控制器；控制器读写 `GameModel` 并通过 `UndoManager` 记录/执行撤销；`CardView` 负责具体渲染与动画；`ConfigManager` 提供全局配置。
 
-// 正面类型
-enum CardFaceType
-{
-    CFT_NONE = -1,
-    CFT_ACE,
-    CFT_TWO,
-    CFT_THREE,
-    CFT_FOUR,
-    CFT_FIVE,
-    CFT_SIX,
-    CFT_SEVEN,
-    CFT_EIGHT,
-    CFT_NINE,
-    CFT_TEN,
-    CFT_JACK,
-    CFT_QUEEN,
-    CFT_KING,
-    CFT_NUM_CARD_FACE_TYPES
-};
-4.图片资源文件
-[res.zip]
-三、程序设计架构要求
-架构概述
-采用MVC架构，将视图、逻辑和数据分离，要求代码的可维护性和可扩展性。
-1. 目录结构
-python
-Classes/
-├── configs/    # 所有静态配置相关类
-├── models/    # 运行时动态数据模型
-├── views/     # 视图层，包含所有的UI展示组件
-├── controllers/  # 控制器层，协调模型和视图
-├── managers/  # 管理器层，提供全局性的服务和功能（作为controllers的成员；可持有model数据，禁止单例）
-├── services/  # 服务层,提供无状态的服务，处理业务逻辑，不管理数据生命周期；（禁止持有model数据，可单例可静态方法）
-└── utils/  # 工具类，提供通用功能
-1.configs/ - 静态配置相关类
-职责和边界：
-所有静态配置相关类;
-举例：
-￮关卡配置
-▪ configs/models/LevelConfig.h      关卡配置类
-▪configs/loaders/LevelConfigLoader.h    配置加载逻辑
-￮卡牌ui资源配置
-▪configs/models/CardResConfig.h 
-2.models/ - 数据模型层，包含游戏的核心数据结构
-职责和边界：
-运行时动态数据模型层；存储游戏数据和状态
-举例：
-￮CardModel 卡牌
-￮GameModel 游戏
-￮UndoModel 回退数据
-3.views/ - 视图层，包含所有的UI展示组件
-职责和边界：
-视图层只负责显示和接收用户输入，不包含业务逻辑
-举例：
-￮CardView  卡牌
-￮GameView 游戏
-4.controllers/ - 控制器层，协调模型和视图
-•职责和边界:
-￮控制器层处理用户操作和业务逻辑，连接视图和模型
-•举例
-￮GameController 管理整个游戏流程
-￮CardController 处理卡片相关的具体逻辑
-•Controllers 可能会依赖多个 Services 和Managers
-5.managers/ -管理器层
-•职责和边界:
-￮主要作为controller的成员变量
-￮可持有model数据并对model数据进行加工
-￮禁止实现为单例模式
-￮禁止反向依赖controller(维护性差，也不便单元测试)
-￮与其他模块的交互可以通过回调接口来实现
-￮可以提供全局性的服务和功能
-•举例:
-￮UndoManager - 处理撤销功能
-6.services/ -服务层
-•职责和边界:
-￮提供无状态的服务，处理业务逻辑，不管理数据生命周期【不持有数据】，而是通过参数操作数据或返回数据
-▪可引用传参修改原始数据（Model）性能高
-▪可返回值为数据（如Model）赋值给调用方 性能低
-￮实现可复用的通用功能
-￮处理跨多个控制器的共享功能
-•举例:
-￮GameModelFromLevelGenerator 
-▪将静态配置（LevelConfig）转换为动态运行时数据（GameModel），并处理卡牌随机生成策略等等
-•Services不依赖 Controllers，而是提供基础服务
-7.utils/ - 工具类，提供通用功能
-2. 组件间通信流程
-1. 用户UI交互流程
-1.用户点击UI元素：
-￮用户点击卡片等UI元素时，首先由View层（如CardView）捕获事件
-2.View到Controller的事件传递：
-￮回调函数：Controller在初始化时向View注册回调函数，View触发回调通知Controller
-3.Controller处理业务逻辑：
-￮GameController或CardController接收到事件后，执行相应的业务逻辑
-￮在处理前，Controller可能会更新UndoModel（通过UndoService向UndoModel插入一条回滚记录数据）
-￮处理逻辑结束后，Controller更新Model的状态
-4.Controller更新View：
-￮逻辑处理完成后，Controller调用View对应的动画接口
-￮例如，GameController调用GameView的playMatchAnimation匹配动画
-Plain Text
-bool GameController::handleCardClick(int cardId){
-    if (!_gameModel) return false;
-    //一些逻辑规则判断
-    ...
-    if (_gameView) {
-        _gameView->playMatchAnimation(cardId);
-    }
-    ...
-    return true;
-}
-1.1 典型交互案例：点击卡片
-Plain Text
-用户点击桌面上的卡片
-        ↓
-PlayFieldView的触摸事件监听器检测到点击
-        ↓
-PlayFieldView调用_onCardClickCallback(cardId)回调函数
-        ↓
-PlayFieldController::handleCardClick(cardId)处理点击事件:
-检查卡片是否满足移动条件
-        ↓
-如果满足条件
-        ↓
-PlayFieldController::replaceTrayWithPlayFieldCard执行:
-- 记录撤销操作
-- 更新model数据
-- 调用相应的vieww执行动画
-2. 游戏初始化加载
-c++
-用户选择关卡（提供关卡ID,捕获关卡选择事件）
-        ↓
-调用GameController::startGame(levelId)
-        ↓
-GameController调用LevelConfigLoader::loadLevelConfig(levelId)获取LevelConfig
-        ↓
-GameController使用GameModelFromLevelGenerator::generateGameModel生成GameModel
-        ↓
-GameController初始化各子控制器:
-PlayFieldController::init(...)
-StackController::init(...)
-UndoManager::init(...)
-        ↓
-创建GameView并添加到父节点:
-gameView = GameView::create(...)
-        ↓
-初始化各子控制器的视图:
-StackController::initView(...)
-PlayFieldController::initView(...)
-        ↓
-GameView初始化UI:
-设置初始布局
-        ↓
-播放入场动画:...
-四、编码规范
-命名规范
-•类名和文件名：大写字母开头
-•函数名和变量名：采用驼峰风格（小写字母开头）
-•类的私有成员和方法：以 _ 下划线开头
-•常量变量名：以小写字母 k 开头
-代码质量要求
-•每个类必须在声明处添加类的注释，清晰描述类的功能、职责和使用场景
-•类的成员变量和公共方法必须添加规范的注释，说明其用途、参数和返回值
-•当函数代码超过50行；请重构。
-•当类代码超过500行；请重构。
-•模块职责明确，遵循单一职责原则；要求代码的可维护性和可扩展性
-各模块具体规范
-models层
-•数据层，不包含复杂的业务逻辑
-•支持序列化和反序列化（因为游戏支持存档恢复继续玩）
-views层
-•UI视图层，负责界面展示
-•可持有const类型的controller指针和const类型的model指针
-•与其他模块的交互可以通过回调接口来实现
-controllers层
-•主要协调model和view之间的交互
-•处理用户操作的业务逻辑
-managers层
-•主要作为controller的成员变量
-•可持有model数据并对model数据进行加工
-•禁止实现为单例模式
-•禁止反向依赖controller(维护性差，也不便单元测试)
-•与其他模块的交互可以通过回调接口来实现
-•可以提供全局性的服务和功能
-services层
-•处理业务逻辑，不管理数据生命周期
-•自身禁止持有数据，但可加工数据
-•可以实现为单例或者提供静态方法
-utils层
-•提供通用独立的辅助功能
-•不涉及业务逻辑，完全独立
+### 如何新增一张卡牌（资源与显示）
+1. 资源准备（`Resources/res/`）：
+   - 数字贴图：`number/` 下新增所需牌面图片（若使用现有即无需新增）。
+   - 花色贴图：`suits/` 下若新增花色，需添加对应 PNG。
+2. 模型更新（如新增花色或点数）：
+   - 在 `CardModel.h` 的 `CardSuitType`/`CardFaceType` 中添加枚举值，并在 `getSuitSymbol`/`getFaceSymbol`、`getCardValue`、`canMatchWith` 中补充处理逻辑（若规则有变化）。
+3. 关卡/布局配置：
+   - 在 `Resources/configs/data/levels/` 或相关配置中，加入该卡牌的初始位置/归属（桌面、手牌堆）。
+   - 若需 UI 布局调整，修改 `Resources/configs/data/ui/*.json`。
+4. 生成与显示：
+   - `GameModelFromLevelGenerator` 根据关卡配置创建对应的 `CardModel` 并放入 `GameModel`。
+   - `GameView` 初始化时会为每个 `CardModel` 生成 `CardView` 并注册点击，`CardView::updateDisplay`/`updateCardLayout` 会根据资源自动布局。
+
+最小化新增场景：仅新增一张普通卡到关卡中，一般无需改代码，只需改关卡配置即可；如新增“花色/点数类型”，才需要按第 2 步扩展 `CardModel`。
+
+### 如何新增一种“回退（Undo）”类型
+目标：在现有 `CARD_MOVE`/`CARD_FLIP`/`STACK_OPERATION` 之外新增一种回退。例如“交换两张桌面牌”（示例）。
+
+步骤：
+1. 定义新类型：
+   - 在 `UndoModel.h` 的 `UndoOperationType` 中新增枚举值，如 `SWAP_PLAYFIELD`。
+2. 扩展 UndoModel 数据：
+   - 视需求在 `UndoModel` 中新增字段（例如第二张卡的引用、原始位置/状态等），并在 `toJson`/`fromJson` 序列化中补充。
+   - 提供静态建造方法，例如 `createSwapPlayfieldAction(cardA, cardB, posA, posB)`。
+3. 记录撤销：
+   - 在触发该操作的控制器里（如 `PlayFieldController`），完成业务动作时调用 `UndoManager::recordUndo(...)` 记录上述 `UndoModel`。
+4. 应用撤销：
+   - 在 `GameModel` 中新增处理函数（或复用一个分发）：实现 `bool undoSwapPlayfield(std::shared_ptr<UndoModel>)`，执行模型层面的状态复原（位置/翻面/分数/计数等）。
+   - 在 `UndoManager::applyUndoToGameModel` 的分发中，增加对新类型的分支，调用 `gameModel->undoSwapPlayfield(...)`。
+5. 视图复原（可选动画）：
+   - 在 `GameController` 中的撤销动画分发（如 `performPlayfieldCardUndoAnimation`）里，为新类型添加相应的视图恢复逻辑，调用 `GameView`/`CardView` 播放动画并最终与模型一致。
+
+验收建议：
+- 单元测试或日志：使用 `UndoManager::getUndoSummary()` 打印最近操作摘要，确认记录与回退一致。
+- 手动测试：先执行新操作，再点击回退按钮，观察模型与视图一致性。
+
+### 代码规范与扩展建议
+- 模型与视图分离：所有状态变更先落在 `GameModel`，视图仅渲染与动画。
+- 撤销的三要素：源/目标卡、位置信息、可选的 z 序与翻面状态、分数变动、时间戳。
+- 控制器职责单一：桌面牌逻辑进 `PlayFieldController`，手牌堆逻辑进 `StackController`，统一协调通过 `GameController`。
+- 配置驱动：优先通过 JSON 配置新增内容，减少改动代码。
+
+### Windows（VS2022）构建
+仓库仅保留 `proj.win32/`，引擎随仓库提供，直接打开 `proj.win32/CardGame.sln` 构建运行。
+

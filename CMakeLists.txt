@@ -29,6 +29,11 @@ set(APP_NAME CardGame)
 
 project(${APP_NAME})
 
+# 统一 C++ 标准，确保跨平台一致
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 set(COCOS2DX_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cocos2d)
 set(CMAKE_MODULE_PATH ${COCOS2DX_ROOT_PATH}/cmake/Modules/)
 
@@ -45,27 +50,17 @@ if(APPLE OR WINDOWS)
     cocos_mark_multi_resources(common_res_files RES_TO "Resources" FOLDERS ${GAME_RES_FOLDER})
 endif()
 
-# add cross-platforms source files and header files 
-list(APPEND GAME_SOURCE
-     Classes/AppDelegate.cpp
-     Classes/GameScene.cpp
-     )
-list(APPEND GAME_HEADER
-     Classes/AppDelegate.h
-     Classes/GameScene.h
-     )
+# 跨平台源码：递归收集 Classes 下所有 .cpp/.h
+file(GLOB_RECURSE GAME_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Classes/*.cpp")
+file(GLOB_RECURSE GAME_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/Classes/*.h")
 
 if(ANDROID)
-    # change APP_NAME to the share library name for Android, it's value depend on AndroidManifest.xml
-    set(APP_NAME MyGame)
-    list(APPEND GAME_SOURCE
-         proj.android/app/jni/hellocpp/main.cpp
-         )
+    # 保持与其它平台一致的模块名
+    set(APP_NAME CardGame)
+    list(APPEND GAME_SOURCE proj.android/app/jni/hellocpp/main.cpp)
 elseif(OHOS)
-    set(APP_NAME cpp-tests)
-    list(APPEND GAME_SOURCE
-        proj.ohos/entry/src/main/cpp/main.cpp
-         )
+    set(APP_NAME CardGame)
+    list(APPEND GAME_SOURCE proj.ohos/entry/src/main/cpp/main.cpp)
 elseif(LINUX)
     list(APPEND GAME_SOURCE
          proj.linux/main.cpp
@@ -95,7 +90,6 @@ elseif(APPLE)
              proj.ios_mac/ios/main.m
              proj.ios_mac/ios/AppController.mm
              proj.ios_mac/ios/RootViewController.mm
-             proj.ios_mac/ios/Prefix.pch
              ${APP_UI_RES}
              )
     elseif(MACOSX)
@@ -105,7 +99,6 @@ elseif(APPLE)
             )
         list(APPEND GAME_SOURCE
              proj.ios_mac/mac/main.cpp
-             proj.ios_mac/mac/Prefix.pch
              ${APP_UI_RES}
              )
     endif()
