@@ -240,9 +240,54 @@ bool GameModel::undoCardMove(std::shared_ptr<UndoModel> undoModel) {
         return false;
     }
 
-    // 这里实现卡牌移动的撤销逻辑
-    // 暂时返回true，具体实现将在后续添加
     CCLOG("GameModel::undoCardMove - Undoing card move operation");
+    
+    // 撤销桌面牌到底牌的操作
+    auto sourceCard = undoModel->getSourceCard();
+    auto targetCard = undoModel->getTargetCard();
+    
+    if (!sourceCard || !targetCard) {
+        CCLOG("GameModel::undoCardMove - Missing source or target card");
+        return false;
+    }
+    
+    // 1. 从底牌栈弹出当前牌，恢复为原底牌
+    if (_currentCardStack.empty()) {
+        CCLOG("GameModel::undoCardMove - Current card stack is empty, cannot undo");
+        return false;
+    }
+    
+    auto restoredCard = popCurrentCard();
+    if (!restoredCard) {
+        CCLOG("GameModel::undoCardMove - Failed to pop current card");
+        return false;
+    }
+    
+    CCLOG("GameModel::undoCardMove - Popped card: %s", restoredCard->toString().c_str());
+    
+    // 关键修复：恢复为UndoModel中记录的原底牌，而不是栈顶
+    setCurrentCard(targetCard);
+    targetCard->setFlipped(undoModel->getTargetFlippedState());
+    
+    CCLOG("GameModel::undoCardMove - Restored bottom card: %s", targetCard->toString().c_str());
+    
+    // 2. 将移动的桌面牌放回原位置（恢复相对位置，不是世界坐标）
+    // 注意：undoModel存储的是世界坐标，实际位置恢复将在GameController中处理
+    sourceCard->setFlipped(undoModel->getSourceFlippedState());
+    
+    // 重新添加到桌面卡牌列表
+    addPlayfieldCard(sourceCard);
+    CCLOG("GameModel::undoCardMove - Re-added card to playfield: %s", sourceCard->toString().c_str());
+    
+    // 3. 恢复分数和移动次数
+    _score -= undoModel->getScoreDelta();
+    if (_moveCount > 0) {
+        _moveCount--;
+    }
+    
+    CCLOG("GameModel::undoCardMove - Card move undo successful. Score: %d, Move count: %d", 
+          _score, _moveCount);
+    
     return true;
 }
 
@@ -264,8 +309,40 @@ bool GameModel::undoStackOperation(std::shared_ptr<UndoModel> undoModel) {
         return false;
     }
 
-    // 这里实现手牌堆操作的撤销逻辑
-    // 暂时返回true，具体实现将在后续添加
     CCLOG("GameModel::undoStackOperation - Undoing stack operation");
+    
+    // 撤销手牌堆到底牌的操作
+    auto sourceCard = undoModel->getSourceCard();
+    auto targetCard = undoModel->getTargetCard();
+    
+    if (!sourceCard || !targetCard) {
+        CCLOG("GameModel::undoStackOperation - Missing source or target card");
+        return false;
+    }
+    
+    // 1. 恢复原底牌
+    setCurrentCard(targetCard);
+    targetCard->setFlipped(undoModel->getTargetFlippedState());
+    
+    CCLOG("GameModel::undoStackOperation - Restored bottom card: %s", targetCard->toString().c_str());
+    
+    // 2. 将手牌放回手牌堆顶部
+    sourceCard->setFlipped(undoModel->getSourceFlippedState());
+    
+    // 插入到手牌堆末尾（作为新的栈顶）
+    _stackCards.push_back(sourceCard);
+    
+    CCLOG("GameModel::undoStackOperation - Restored card to stack: %s", sourceCard->toString().c_str());
+    CCLOG("GameModel::undoStackOperation - Stack size after restore: %zu", _stackCards.size());
+    
+    // 3. 恢复分数和移动次数
+    _score -= undoModel->getScoreDelta();
+    if (_moveCount > 0) {
+        _moveCount--;
+    }
+    
+    CCLOG("GameModel::undoStackOperation - Stack operation undo successful. Score: %d, Move count: %d", 
+          _score, _moveCount);
+    
     return true;
 }

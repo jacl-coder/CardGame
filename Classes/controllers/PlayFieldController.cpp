@@ -187,11 +187,8 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
                 // 强制设置为正面显示
                 cardView->setFlipped(true, false);
                 
-                // 更新CardView的模型为栈顶卡牌
-                auto stackTopCard = _gameModel->getCurrentCard();
-                if (stackTopCard) {
-                    cardView->setCardModel(stackTopCard);
-                }
+                // 注意：不需要调用setCardModel()
+                // cardView已经绑定了正确的CardModel，重新设置可能导致显示错乱
             } else {
                 // 如果没有底牌区域，直接在overlay中替换
                 if (_currentCardView && _currentCardView != cardView) {
@@ -220,6 +217,10 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
             _cardViewMap.erase(movedCardId);
             auto it = std::find(_playfieldCardViews.begin(), _playfieldCardViews.end(), cardView);
             if (it != _playfieldCardViews.end()) _playfieldCardViews.erase(it);
+            
+            // 关键修复：从GameModel的桌面卡牌列表中移除
+            _gameModel->removePlayfieldCard(movedCardId);
+            CCLOG("PlayFieldController::replaceTrayWithPlayFieldCard - Removed card from playfield model: %d", movedCardId);
             
             // 注意：不调用cardView->updateDisplay()，因为它会重置位置为model中的位置
         } else {
@@ -293,6 +294,29 @@ CardView* PlayFieldController::getCardView(int cardId) const {
     return (it != _cardViewMap.end()) ? it->second : nullptr;
 }
 
+void PlayFieldController::registerCardView(CardView* cardView) {
+    if (!cardView || !cardView->getCardModel()) {
+        CCLOG("PlayFieldController::registerCardView - Invalid card view");
+        return;
+    }
+    
+    int cardId = cardView->getCardModel()->getCardId();
+    
+    // 添加到映射
+    _cardViewMap[cardId] = cardView;
+    
+    // 添加到列表
+    _playfieldCardViews.push_back(cardView);
+    
+    // 设置点击回调
+    cardView->setCardClickCallback([this](CardView* view, std::shared_ptr<CardModel> model) {
+        onCardClicked(view, model);
+    });
+    
+    CCLOG("PlayFieldController::registerCardView - Registered card %s (ID: %d)", 
+          cardView->getCardModel()->toString().c_str(), cardId);
+}
+
 void PlayFieldController::updateDisplay() {
     // 更新可匹配卡牌的高亮状态
     highlightMatchableCards(false); // 先清除所有高亮
@@ -314,23 +338,37 @@ bool PlayFieldController::recordUndoOperation(std::shared_ptr<CardModel> sourceC
         return false;
     }
 
-    // 获取底牌区的实际位置
+    // 获取卡牌视图以进行正确的坐标转换
+    auto cardView = getCardView(sourceCard->getCardId());
+    if (!cardView) {
+        CCLOG("PlayFieldController::recordUndoOperation - Card view not found for card ID: %d", sourceCard->getCardId());
+        return false;
+    }
+
+    // 使用与正常动画相同的坐标转换方式获取世界坐标
+    Node* srcParent = cardView->getParent(); // 桌面区域
+    Vec2 sourcePosition = srcParent->convertToWorldSpace(cardView->getPosition());
+    int sourceZOrder = cardView->getLocalZOrder();
+    
+    // 获取底牌的世界坐标
     Vec2 targetPosition = Vec2::ZERO;
-    if (_configManager) {
-        auto uiConfig = _configManager->getUILayoutConfig();
-        if (uiConfig) {
-            targetPosition = uiConfig->getCurrentCardPosition();
-        }
+    if (_currentCardView && _currentCardView->getParent()) {
+        // 使用现有底牌的世界坐标（与正常动画一致）
+        targetPosition = _currentCardView->getParent()->convertToWorldSpace(_currentCardView->getPosition());
+    } else {
+        // 备用方案：使用配置的底牌位置（这应该已经是世界坐标）
+        targetPosition = _configManager->getUILayoutConfig()->getCurrentCardPosition();
     }
     
-    CCLOG("PlayFieldController::recordUndoOperation - Recording positions: source(%.0f,%.0f) -> target(%.0f,%.0f)",
-          sourceCard->getPosition().x, sourceCard->getPosition().y,
-          targetPosition.x, targetPosition.y);
+    CCLOG("PlayFieldController::recordUndoOperation - Recording world positions: source(%.0f,%.0f) -> target(%.0f,%.0f)",
+          sourcePosition.x, sourcePosition.y, targetPosition.x, targetPosition.y);
     
     // 创建撤销记录
     auto undoModel = UndoModel::createPlayfieldToCurrentAction(
         sourceCard, targetCard,
-        sourceCard->getPosition(), targetPosition
+        sourcePosition, targetPosition,
+        0,
+        sourceZOrder
     );
     
     return _undoManager->recordUndo(undoModel);

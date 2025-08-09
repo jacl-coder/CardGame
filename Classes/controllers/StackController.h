@@ -124,6 +124,12 @@ public:
      * 游戏开始时：若需要，从备用牌堆顶部移动一张牌作为当前底牌（带动画，默认不记录撤销）
      */
     bool initialDealCurrentFromStack();
+    
+    /**
+     * 注册新的卡牌视图（用于回退恢复等场景）
+     * @param cardView 要注册的卡牌视图
+     */
+    void registerCardView(CardView* cardView);
 
 protected:
     /**

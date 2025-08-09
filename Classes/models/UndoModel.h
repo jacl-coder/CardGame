@@ -47,12 +47,15 @@ public:
     std::shared_ptr<CardModel> getTargetCard() const { return _targetCard; }
     void setTargetCard(std::shared_ptr<CardModel> card) { _targetCard = card; }
     
-    // 位置相关
+    // 位置/层级相关
     Vec2 getSourcePosition() const { return _sourcePosition; }
     void setSourcePosition(const Vec2& position) { _sourcePosition = position; }
     
     Vec2 getTargetPosition() const { return _targetPosition; }
     void setTargetPosition(const Vec2& position) { _targetPosition = position; }
+
+    int getSourceZOrder() const { return _sourceZOrder; }
+    void setSourceZOrder(int z) { _sourceZOrder = z; }
     
     // 状态相关
     bool getSourceFlippedState() const { return _sourceFlippedState; }
@@ -100,7 +103,8 @@ public:
         std::shared_ptr<CardModel> targetCard,
         const Vec2& sourcePos,
         const Vec2& targetPos,
-        int scoreDelta = 0
+        int scoreDelta = 0,
+        int sourceZOrder = 0
     );
     
     /**
@@ -144,6 +148,7 @@ private:
     std::shared_ptr<CardModel> _targetCard;     // 目标卡牌
     Vec2 _sourcePosition;                       // 源位置
     Vec2 _targetPosition;                       // 目标位置
+    int _sourceZOrder;                          // 源卡牌原始z序
     bool _sourceFlippedState;                   // 源卡牌翻牌状态
     bool _targetFlippedState;                   // 目标卡牌翻牌状态
     int _scoreDelta;                            // 分数变化

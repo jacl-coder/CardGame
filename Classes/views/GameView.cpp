@@ -133,11 +133,14 @@ void GameView::createPlayfieldArea(std::shared_ptr<LevelConfig> levelConfig,
     
     // 根据配置创建桌面牌
     const auto& playfieldCards = gameModel->getPlayfieldCards();
-    for (const auto& cardModel : playfieldCards) {
+    for (size_t i = 0; i < playfieldCards.size(); ++i) {
+        const auto& cardModel = playfieldCards[i];
         auto cardView = CardView::create(cardModel);
         if (cardView) {
             // 设置卡牌位置（相对于桌面区域）
             cardView->setPosition(cardModel->getPosition());
+            // 固定初始化z序，便于后续撤销时按原始层级恢复
+            cardView->setLocalZOrder(static_cast<int>(i));
             
             // 设置点击回调
             cardView->setCardClickCallback([this](CardView* view, std::shared_ptr<CardModel> model) {
@@ -148,9 +151,11 @@ void GameView::createPlayfieldArea(std::shared_ptr<LevelConfig> levelConfig,
             _playfieldCardViews.push_back(cardView);
             _cardViewMap[cardModel->getCardId()] = cardView;
             
-            CCLOG("  Created playfield card: %s at (%.0f,%.0f)", 
+            CCLOG("  Created playfield card[%zu]: %s at (%.0f,%.0f), z:%d", 
+                  i,
                   cardModel->toString().c_str(), 
-                  cardModel->getPosition().x, cardModel->getPosition().y);
+                  cardModel->getPosition().x, cardModel->getPosition().y,
+                  static_cast<int>(i));
         }
     }
 }

@@ -83,11 +83,35 @@ public:
     Node* getCurrentCardArea() const { return _currentCardArea; }
     
     /**
+     * 获取手牌堆区域节点
+     * @return 手牌堆区域节点
+     */
+    Node* getStackArea() const { return _stackArea; }
+    
+    /**
+     * 获取桌面区域节点
+     * @return 桌面区域节点
+     */
+    Node* getPlayfieldArea() const { return _playfieldArea; }
+    
+    /**
+     * 获取卡牌ID到视图的映射
+     * @return 卡牌视图映射
+     */
+    const std::map<int, CardView*>& getCardViewMap() const { return _cardViewMap; }
+    
+    /**
      * 设置卡牌点击回调
      * @param callback 点击回调函数
      */
     using CardClickCallback = std::function<void(CardView*, std::shared_ptr<CardModel>)>;
     void setCardClickCallback(const CardClickCallback& callback) { _cardClickCallback = callback; }
+    
+    /**
+     * 获取卡牌点击回调
+     * @return 点击回调函数
+     */
+    const CardClickCallback& getCardClickCallback() const { return _cardClickCallback; }
 
     /**
      * 设置回退按钮点击回调

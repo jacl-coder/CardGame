@@ -179,6 +179,39 @@ protected:
      */
     void performUndoAnimation(std::shared_ptr<UndoModel> undoModel);
 
+    /**
+     * 执行桌面牌撤销动画
+     * @param undoModel 撤销操作模型
+     */
+    void performPlayfieldCardUndoAnimation(std::shared_ptr<UndoModel> undoModel);
+
+    /**
+     * 执行手牌堆撤销动画
+     * @param undoModel 撤销操作模型
+     */
+    void performStackCardUndoAnimation(std::shared_ptr<UndoModel> undoModel);
+
+    /**
+     * 恢复卡牌到桌面区域
+     * @param cardView 卡牌视图
+     * @param cardModel 卡牌模型
+     * @param absolutePos 绝对位置
+     */
+    void restoreCardToPlayfield(CardView* cardView, std::shared_ptr<CardModel> cardModel, const Vec2& absolutePos, int originalZOrder);
+
+    /**
+     * 恢复卡牌到手牌堆
+     * @param cardView 卡牌视图
+     * @param cardModel 卡牌模型
+     * @param absolutePos 绝对位置
+     */
+    void restoreCardToStack(CardView* cardView, std::shared_ptr<CardModel> cardModel, const Vec2& absolutePos);
+
+    /**
+     * 更新底牌显示
+     */
+    void updateCurrentCardDisplay();
+
 private:
     // 核心组件
     GameView* _gameView;                                // 游戏视图

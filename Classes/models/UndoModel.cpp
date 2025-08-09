@@ -10,6 +10,7 @@ UndoModel::UndoModel(UndoOperationType operationType)
     , _sourceFlippedState(true)
     , _targetFlippedState(true)
     , _scoreDelta(0)
+    , _sourceZOrder(0)
     , _timestamp(getCurrentTimestamp()) {
 }
 
@@ -52,7 +53,8 @@ std::shared_ptr<UndoModel> UndoModel::createPlayfieldToCurrentAction(
     std::shared_ptr<CardModel> targetCard,
     const Vec2& sourcePos,
     const Vec2& targetPos,
-    int scoreDelta) {
+    int scoreDelta,
+    int sourceZOrder) {
     
     auto undoAction = std::make_shared<UndoModel>(UndoOperationType::CARD_MOVE);
     undoAction->setSourceCard(sourceCard);
@@ -60,6 +62,7 @@ std::shared_ptr<UndoModel> UndoModel::createPlayfieldToCurrentAction(
     undoAction->setSourcePosition(sourcePos);
     undoAction->setTargetPosition(targetPos);
     undoAction->setScoreDelta(scoreDelta);
+    undoAction->setSourceZOrder(sourceZOrder);
     
     if (sourceCard) {
         undoAction->setSourceFlippedState(sourceCard->isFlipped());
