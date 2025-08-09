@@ -198,6 +198,79 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)\Resources\" /D /E /I /F /Y
     <ClInclude Include="main.h" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Resources - Images -->
+    <None Include="..\Resources\res\card_general.png" />
+    <None Include="..\Resources\res\suits\club.png" />
+    <None Include="..\Resources\res\suits\diamond.png" />
+    <None Include="..\Resources\res\suits\heart.png" />
+    <None Include="..\Resources\res\suits\spade.png" />
+    <!-- Resources - Card Numbers -->
+    <None Include="..\Resources\res\number\big_black_A.png" />
+    <None Include="..\Resources\res\number\big_black_2.png" />
+    <None Include="..\Resources\res\number\big_black_3.png" />
+    <None Include="..\Resources\res\number\big_black_4.png" />
+    <None Include="..\Resources\res\number\big_black_5.png" />
+    <None Include="..\Resources\res\number\big_black_6.png" />
+    <None Include="..\Resources\res\number\big_black_7.png" />
+    <None Include="..\Resources\res\number\big_black_8.png" />
+    <None Include="..\Resources\res\number\big_black_9.png" />
+    <None Include="..\Resources\res\number\big_black_10.png" />
+    <None Include="..\Resources\res\number\big_black_J.png" />
+    <None Include="..\Resources\res\number\big_black_Q.png" />
+    <None Include="..\Resources\res\number\big_black_K.png" />
+    <None Include="..\Resources\res\number\big_red_A.png" />
+    <None Include="..\Resources\res\number\big_red_2.png" />
+    <None Include="..\Resources\res\number\big_red_3.png" />
+    <None Include="..\Resources\res\number\big_red_4.png" />
+    <None Include="..\Resources\res\number\big_red_5.png" />
+    <None Include="..\Resources\res\number\big_red_6.png" />
+    <None Include="..\Resources\res\number\big_red_7.png" />
+    <None Include="..\Resources\res\number\big_red_8.png" />
+    <None Include="..\Resources\res\number\big_red_9.png" />
+    <None Include="..\Resources\res\number\big_red_10.png" />
+    <None Include="..\Resources\res\number\big_red_J.png" />
+    <None Include="..\Resources\res\number\big_red_Q.png" />
+    <None Include="..\Resources\res\number\big_red_K.png" />
+    <None Include="..\Resources\res\number\small_black_A.png" />
+    <None Include="..\Resources\res\number\small_black_2.png" />
+    <None Include="..\Resources\res\number\small_black_3.png" />
+    <None Include="..\Resources\res\number\small_black_4.png" />
+    <None Include="..\Resources\res\number\small_black_5.png" />
+    <None Include="..\Resources\res\number\small_black_6.png" />
+    <None Include="..\Resources\res\number\small_black_7.png" />
+    <None Include="..\Resources\res\number\small_black_8.png" />
+    <None Include="..\Resources\res\number\small_black_9.png" />
+    <None Include="..\Resources\res\number\small_black_10.png" />
+    <None Include="..\Resources\res\number\small_black_J.png" />
+    <None Include="..\Resources\res\number\small_black_Q.png" />
+    <None Include="..\Resources\res\number\small_black_K.png" />
+    <None Include="..\Resources\res\number\small_red_A.png" />
+    <None Include="..\Resources\res\number\small_red_2.png" />
+    <None Include="..\Resources\res\number\small_red_3.png" />
+    <None Include="..\Resources\res\number\small_red_4.png" />
+    <None Include="..\Resources\res\number\small_red_5.png" />
+    <None Include="..\Resources\res\number\small_red_6.png" />
+    <None Include="..\Resources\res\number\small_red_7.png" />
+    <None Include="..\Resources\res\number\small_red_8.png" />
+    <None Include="..\Resources\res\number\small_red_9.png" />
+    <None Include="..\Resources\res\number\small_red_10.png" />
+    <None Include="..\Resources\res\number\small_red_J.png" />
+    <None Include="..\Resources\res\number\small_red_Q.png" />
+    <None Include="..\Resources\res\number\small_red_K.png" />
+    <!-- Resources - Fonts -->
+    <None Include="..\Resources\fonts\arial.ttf" />
+    <None Include="..\Resources\fonts\Marker Felt.ttf" />
+    <!-- Resources - Config Files -->
+    <None Include="..\Resources\configs\data\display\display_config.json" />
+    <None Include="..\Resources\configs\data\game\rules_config.json" />
+    <None Include="..\Resources\configs\data\game\card_layout_config.json" />
+    <None Include="..\Resources\configs\data\levels\level_1.json" />
+    <None Include="..\Resources\configs\data\levels\level_2.json" />
+    <None Include="..\Resources\configs\data\ui\layout_config.json" />
+    <None Include="..\Resources\configs\data\ui\font_config.json" />
+    <None Include="..\Resources\configs\data\ui\animation_config.json" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\cocos2d\cocos\2d\libcocos2d.vcxproj">
       <Project>{98a51ba8-fc3a-415b-ac8f-8c7bd464e93e}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
