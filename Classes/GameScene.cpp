@@ -94,8 +94,9 @@ bool GameScene::init()
     // 测试配置系统（可选）
     // testConfigSystem(); // 取消注释以查看配置系统测试
 
-    // 创建实际的游戏场景
-    createGameScene();
+    // 初始化关卡选择UI（选择后再创建与加载游戏）
+    initLevelSelectUI();
+    initBackButtonUI();
 
     // 注释掉测试卡牌，只显示游戏场景
     /*
@@ -233,40 +234,216 @@ void GameScene::testConfigSystem() {
 }
 
 void GameScene::createGameScene() {
-    CCLOG("=== Creating Game Scene ===");
+    CCLOG("=== Preparing Game Scene (deferred load) ===");
+}
 
-    // 创建游戏视图
-    auto gameView = GameView::create();
-    if (!gameView) {
-        CCLOG("❌ Failed to create game view");
-        return;
-    }
+void GameScene::initLevelSelectUI() {
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-    // 添加游戏视图到场景
-    this->addChild(gameView, 10); // 高层级，显示在测试卡牌之上
-
-    // 创建游戏控制器
-    auto gameController = new GameController();
-    if (!gameController->init(gameView)) {
-        CCLOG("❌ Failed to initialize game controller");
-        delete gameController;
-        return;
-    }
-
-    // 开始游戏（关卡1）
-    if (gameController->startGame(1)) {
-        CCLOG("✅ Game scene created and started successfully");
-        CCLOG("📋 Current game state: %d", static_cast<int>(gameController->getCurrentGameState()));
-        CCLOG("🎮 Current level: %d", gameController->getCurrentLevelId());
-
-        // 保存控制器引用（在实际项目中应该有更好的生命周期管理）
-        gameView->setUserData(gameController);
+    // 关卡选择背景（避免纯黑）
+    if (_levelSelectBg == nullptr) {
+        // 渐变或纯色，使用柔和的蓝绿色调
+        Color4B bgColor(80, 39, 97, 255);   //rgb(80, 39, 97)
+        _levelSelectBg = LayerColor::create(bgColor);
+        _levelSelectBg->setContentSize(visibleSize);
+        _levelSelectBg->setPosition(origin);
+        this->addChild(_levelSelectBg, 5);
     } else {
-        CCLOG("❌ Failed to start game");
-        delete gameController;
+        _levelSelectBg->setVisible(true);
     }
 
-    CCLOG("=== Game Scene Creation Complete ===");
+    // 列出关卡目录中的所有关卡文件
+    std::string levelsDir = "configs/data/levels/";
+    std::vector<std::string> files = FileUtils::getInstance()->listFiles(levelsDir);
+
+    std::vector<int> levelIds;
+    levelIds.reserve(files.size());
+
+    auto extractLevelId = [](const std::string& filename) -> int {
+        // 期望格式: level_<id>.json
+        size_t slash = filename.find_last_of("/");
+        std::string name = (slash == std::string::npos) ? filename : filename.substr(slash + 1);
+        if (name.size() < 12) return -1; // 最小长度粗略检查
+        const std::string prefix = "level_";
+        const std::string suffix = ".json";
+        if (name.rfind(prefix, 0) != 0) return -1; // 必须以 level_ 开头
+        if (name.size() <= prefix.size() + suffix.size()) return -1;
+        if (name.substr(name.size() - suffix.size()) != suffix) return -1;
+        std::string idPart = name.substr(prefix.size(), name.size() - prefix.size() - suffix.size());
+        for (char c : idPart) { if (c < '0' || c > '9') return -1; }
+        return idPart.empty() ? -1 : atoi(idPart.c_str());
+    };
+
+    for (const auto& path : files) {
+        // 过滤目录，仅保留文件
+        if (FileUtils::getInstance()->isDirectoryExist(path)) continue;
+        int id = extractLevelId(path);
+        if (id > 0) levelIds.push_back(id);
+    }
+
+    if (levelIds.empty()) {
+        CCLOG("initLevelSelectUI - No level files found in %s", levelsDir.c_str());
+        // 仍然显示一个占位按钮，便于调试
+        levelIds.push_back(1);
+    }
+
+    std::sort(levelIds.begin(), levelIds.end());
+    levelIds.erase(std::unique(levelIds.begin(), levelIds.end()), levelIds.end());
+
+    // 创建菜单项，按列排列（居中，竖向）
+    std::vector<MenuItem*> items;
+    items.reserve(levelIds.size());
+
+    const float fontSize = 48.0f;
+    const float gapY = 150.0f; // 拉开间距
+    const float centerX = origin.x + visibleSize.width * 0.5f;
+    const float totalHeight = (levelIds.empty() ? 0.0f : (static_cast<float>(levelIds.size() - 1) * gapY));
+    const float startY = origin.y + visibleSize.height * 0.5f + totalHeight * 0.5f + 20.0f; // 略微上移
+
+    for (size_t i = 0; i < levelIds.size(); ++i) {
+        int levelId = levelIds[i];
+        auto label = Label::createWithTTF(StringUtils::format("Level %d", levelId), "fonts/Marker Felt.ttf", fontSize);
+        label->setColor(Color3B::WHITE);
+
+        // 计算按钮尺寸（根据文字大小添加内边距）
+        const Size textSize = label->getContentSize();
+        const float paddingX = 28.0f;
+        const float paddingY = 22.0f;
+        const Size btnSize(textSize.width + paddingX * 2.0f, textSize.height + paddingY * 2.0f);
+
+        auto makeButtonNode = [&](const Color4F& bgColor, const Color4F& borderColor) -> Node* {
+            auto container = Node::create();
+            container->setContentSize(btnSize);
+            // 背景
+            auto bg = DrawNode::create();
+            bg->drawSolidRect(Vec2::ZERO, Vec2(btnSize.width, btnSize.height), bgColor);
+            // 边框
+            bg->drawRect(Vec2(0.5f, 0.5f), Vec2(btnSize.width - 0.5f, btnSize.height - 0.5f), borderColor);
+            container->addChild(bg);
+            // 文本
+            auto text = Label::createWithTTF(StringUtils::format("Level %d", levelId), "fonts/Marker Felt.ttf", fontSize);
+            text->setColor(Color3B::WHITE);
+            text->setPosition(Vec2(btnSize.width * 0.5f, btnSize.height * 0.5f));
+            container->addChild(text, 1);
+            return container;
+        };
+
+        // 正常与按下态颜色
+        // 更明亮的按钮配色
+        Color4F normalBg(0.22f, 0.36f, 0.52f, 0.96f);     // 蓝色
+        Color4F normalBorder(1.f, 1.f, 1.f, 0.60f);
+        Color4F selectedBg(0.30f, 0.50f, 0.70f, 0.98f);   // 更亮
+        Color4F selectedBorder(1.f, 1.f, 1.f, 0.80f);
+
+        auto normalNode = makeButtonNode(normalBg, normalBorder);
+        auto selectedNode = makeButtonNode(selectedBg, selectedBorder);
+
+        auto item = MenuItemSprite::create(normalNode, selectedNode, nullptr, [this, levelId](Ref*) {
+            this->startLevel(levelId);
+        });
+        item->setPosition(Vec2(centerX, startY - static_cast<float>(i) * gapY));
+        items.push_back(item);
+    }
+
+    // 如果数量太多，简单地限制在可视范围内（生产可改为滚动列表）
+    // 这里只是基础实现
+
+    // 将 std::vector<MenuItem*> 转换为 cocos2d::Vector<MenuItem*>
+    cocos2d::Vector<MenuItem*> menuItems;
+    menuItems.reserve(static_cast<int>(items.size()));
+    for (auto* it : items) {
+        menuItems.pushBack(it);
+    }
+
+    _levelMenu = Menu::createWithArray(menuItems);
+    _levelMenu->setPosition(Vec2::ZERO);
+    this->addChild(_levelMenu, 20);
+}
+
+void GameScene::startLevel(int levelId) {
+    CCLOG("startLevel - Starting level %d", levelId);
+
+    // 若已有游戏在运行，则先彻底清理
+    if (_gameController || _gameView) {
+        CCLOG("startLevel - Cleaning previous game before starting new level");
+        if (_gameController) {
+            delete _gameController;
+            _gameController = nullptr;
+        }
+        if (_gameView) {
+            _gameView->removeFromParentAndCleanup(true);
+            _gameView = nullptr;
+        }
+    }
+
+    // 首次选择关卡时创建视图与控制器
+    if (_gameView == nullptr) {
+        _gameView = GameView::create();
+        if (!_gameView) {
+            CCLOG("❌ Failed to create game view");
+            return;
+        }
+        this->addChild(_gameView, 10);
+    }
+
+    if (_gameController == nullptr) {
+        _gameController = new GameController();
+        if (!_gameController->init(_gameView)) {
+            CCLOG("❌ Failed to initialize game controller");
+            delete _gameController;
+            _gameController = nullptr;
+            return;
+        }
+    }
+
+    // 开始关卡
+    if (_gameController->startGame(levelId)) {
+        CCLOG("✅ Level %d started", levelId);
+        _gameView->setUserData(_gameController);
+        if (_levelMenu) _levelMenu->setVisible(false); // 隐藏关卡菜单
+        if (_levelSelectBg) _levelSelectBg->setVisible(false); // 隐藏背景
+        if (_backMenu) _backMenu->setVisible(true);    // 显示返回按钮
+    } else {
+        CCLOG("❌ Failed to start level %d", levelId);
+    }
+}
+
+void GameScene::initBackButtonUI() {
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    Vec2 origin = Director::getInstance()->getVisibleOrigin();
+
+    auto label = Label::createWithTTF("Back", "fonts/Marker Felt.ttf", 36);
+    auto backItem = MenuItemLabel::create(label, [this](Ref*) {
+        this->returnToLevelSelect();
+    });
+    // 放在右上角
+    backItem->setPosition(Vec2(origin.x + visibleSize.width - 60.0f,
+                               origin.y + visibleSize.height - 80.0f));
+
+    _backMenu = Menu::create(backItem, nullptr);
+    _backMenu->setPosition(Vec2::ZERO);
+    _backMenu->setVisible(false); // 初始隐藏，进入关卡后显示
+    this->addChild(_backMenu, 21);
+}
+
+void GameScene::returnToLevelSelect() {
+    CCLOG("returnToLevelSelect - Returning to level selection");
+
+    // 彻底销毁并回到初始状态，避免悬垂指针
+    if (_gameController) {
+        delete _gameController;
+        _gameController = nullptr;
+    }
+    if (_gameView) {
+        _gameView->removeFromParentAndCleanup(true);
+        _gameView = nullptr;
+    }
+
+    // 切换UI可见性
+    if (_levelMenu) _levelMenu->setVisible(true);
+    if (_levelSelectBg) _levelSelectBg->setVisible(true);
+    if (_backMenu) _backMenu->setVisible(false);
 }
 
 

@@ -27,6 +27,9 @@
 
 #include "cocos2d.h"
 
+class GameView;
+class GameController;
+
 class GameScene : public cocos2d::Scene
 {
 public:
@@ -50,6 +53,33 @@ private:
      * 创建游戏场景
      */
     void createGameScene();
+
+    /**
+     * 初始化关卡选择UI
+     */
+    void initLevelSelectUI();
+
+    /**
+     * 开始指定关卡
+     */
+    void startLevel(int levelId);
+
+    /**
+     * 初始化返回按钮（回到关卡选择）
+     */
+    void initBackButtonUI();
+
+    /**
+     * 返回关卡选择界面，清理已加载的游戏
+     */
+    void returnToLevelSelect();
+
+private:
+    GameView* _gameView = nullptr;
+    GameController* _gameController = nullptr;
+    cocos2d::Menu* _levelMenu = nullptr;
+    cocos2d::Menu* _backMenu = nullptr;
+    cocos2d::LayerColor* _levelSelectBg = nullptr;
 };
 
 #endif // __GAME_SCENE_H__

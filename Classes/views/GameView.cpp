@@ -267,11 +267,11 @@ void GameView::createBackground(std::shared_ptr<LevelConfig> levelConfig) {
     stackBg->setPosition(Vec2::ZERO);
     addChild(stackBg, -1);
 
-    // 添加标题
-    auto titleLabel = Label::createWithSystemFont(
+    // 添加标题（使用 Marker Felt 字体）
+    auto titleLabel = Label::createWithTTF(
         levelConfig->getLevelName().empty() ? "Card Game" : levelConfig->getLevelName(),
-        "Arial", 24);
-    titleLabel->setPosition(visibleSize.width * 0.5f, visibleSize.height - 50);
+        "fonts/Marker Felt.ttf", 48);
+    titleLabel->setPosition(visibleSize.width * 0.5f, visibleSize.height - 48);
     titleLabel->setColor(Color3B::WHITE);
     addChild(titleLabel);
 
