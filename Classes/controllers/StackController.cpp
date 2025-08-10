@@ -1,4 +1,5 @@
 #include "StackController.h"
+#include "../views/GameView.h"
 #include <algorithm>
 
 StackController::StackController()
@@ -122,19 +123,10 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
     // 3. 执行动画：顶部手牌移动到配置的底牌位置
     Vec2 targetWorldPosition = targetPosition; // 重用之前计算的目标位置
 
-    // 在动画开始前，立即从『模型与容器』移除栈顶手牌，以便立刻启用下一张手牌（支持连续点击）
+    // 注意：与PlayFieldController保持一致，不在动画开始前移除视图引用
+    // 先更新模型数据，但保留视图引用直到动画完成
     int topCardId = topCard->getCardId();
     _gameModel->removeTopStackCard();
-
-    // 从控制器容器中移除旧的视图引用，避免残留悬空指针
-    auto mapItPre = _cardViewMap.find(topCardId);
-    if (mapItPre != _cardViewMap.end()) {
-        _cardViewMap.erase(mapItPre);
-    }
-    auto vecItPre = std::find(_stackCardViews.begin(), _stackCardViews.end(), topCardView);
-    if (vecItPre != _stackCardViews.end()) {
-        _stackCardViews.erase(vecItPre);
-    }
 
     // 立即翻开下一张手牌并启用交互（如果存在）
     revealNextCard();
@@ -152,26 +144,67 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
             return;
         }
         
-        if (topCardView) {
-            // 在释放视图前，先从本控制器的容器中移除，避免残留悬空指针
-            auto mapIt = _cardViewMap.find(topCardId);
-            if (mapIt != _cardViewMap.end()) {
-                _cardViewMap.erase(mapIt);
-            }
-
-            auto vecIt = std::find(_stackCardViews.begin(), _stackCardViews.end(), topCardView);
-            if (vecIt != _stackCardViews.end()) {
-                _stackCardViews.erase(vecIt);
-            }
-
-            topCardView->removeFromParent();
-            topCardView->release();
-        }
-
         if (success) {
-            // 模型与交互已在动画开始前更新
-            updateCurrentCardDisplay();
+            // 完全仿照PlayFieldController的处理方式
+            // 如果有底牌区域，直接替换显示
+            if (_currentCardArea) {
+                // 移除旧的底牌视图
+                if (_currentCardView && _currentCardView != topCardView) {
+                    _currentCardView->removeFromParent();
+                } else {
+                    // 清除底牌区域中的所有子视图
+                    _currentCardArea->removeAllChildren();
+                }
+                
+                // 将新卡牌移入底牌区域
+                topCardView->retain();
+                topCardView->removeFromParent();
+                
+                _currentCardArea->addChild(topCardView, 300); // 底牌层级
+                
+                // 设置卡牌锚点为中心，然后放在区域中心
+                topCardView->setAnchorPoint(Vec2(0.5f, 0.5f));
+                topCardView->setPosition(Vec2(0, 0));
+                
+                topCardView->setEnabled(false); // 底牌不可点击
+                topCardView->setVisible(true);
+                topCardView->release();
+                
+                // 强制设置为正面显示
+                topCardView->setFlipped(true, false);
+                
+            } else {
+                // 如果没有底牌区域，保持当前位置
+                if (_currentCardView && _currentCardView != topCardView) {
+                    _currentCardView->removeFromParent();
+                }
+                
+                topCardView->setEnabled(false); // 当前底牌不可点击
+                topCardView->setVisible(true);
+            }
+
+            // 更新引用
+            _currentCardView = topCardView;
+            
+            // 同步更新GameView的_currentCardView引用
+            if (_gameView) {
+                _gameView->setCurrentCardView(topCardView);
+            }
+            
+            // 从映射和列表中移除该卡视图，避免重复显示（与PlayFieldController一致）
+            _cardViewMap.erase(topCardId);
+            auto it = std::find(_stackCardViews.begin(), _stackCardViews.end(), topCardView);
+            if (it != _stackCardViews.end()) _stackCardViews.erase(it);
+            
+            // 注意：不调用topCardView->updateDisplay()，因为它会重置位置为model中的位置
+            
+        } else {
+            // 失败时释放临时引用
+            topCardView->removeFromParent();
         }
+
+        // 释放 retain
+        topCardView->release();
 
         if (callback) callback(success);
     });
@@ -417,7 +450,7 @@ bool StackController::initialDealCurrentFromStack() {
         // 更新交互 & 翻开下一张
         revealNextCard();
         updateStackInteractivity();
-        updateCurrentCardDisplay();
+        // 不要调用updateCurrentCardDisplay()，因为动画回调中已经处理了底牌显示
     });
 
     _initialDealt = true;

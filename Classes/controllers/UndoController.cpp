@@ -228,8 +228,14 @@ void UndoController::updateCurrentCardDisplay() {
     auto currentCard = _gameModel->getCurrentCard();
     if (!currentCard) {
         CCLOG("UndoController::updateCurrentCardDisplay - No current card in model");
-        // 底牌区域置空
+        // 底牌区域置空，同时重置所有控制器的_currentCardView指针
         _gameView->setCurrentCardView(nullptr);
+        if (_playfieldController) {
+            _playfieldController->setCurrentCardView(nullptr);
+        }
+        if (_stackController) {
+            _stackController->setCurrentCardView(nullptr);
+        }
         return;
     }
     
@@ -249,21 +255,31 @@ void UndoController::updateCurrentCardDisplay() {
         return;
     }
     
+    // 关键修复：先将所有控制器的_currentCardView设置为nullptr，避免悬挂指针
+    _gameView->setCurrentCardView(nullptr);
+    if (_playfieldController) {
+        _playfieldController->setCurrentCardView(nullptr);
+    }
+    if (_stackController) {
+        _stackController->setCurrentCardView(nullptr);
+    }
+    
     // 清除旧的底牌视图（保持原有逻辑）
     currentCardArea->removeAllChildren();
     
-    // 添加新的底牌视图（保持原有逻辑）
+    // 添加新的底牌视图
     currentCardArea->addChild(newCurrentCardView, 300);
     newCurrentCardView->setPosition(Vec2(0, 0)); // 居中显示
     newCurrentCardView->setFlipped(true, false);  // 正面显示，无动画
     newCurrentCardView->setEnabled(false);        // 底牌不可点击
     
-    // 更新GameView的引用（保持原有逻辑）
+    // 同步更新所有引用
     _gameView->setCurrentCardView(newCurrentCardView);
-    
-    // 关键修复：同步更新PlayFieldController的引用（保持原有逻辑）
     if (_playfieldController) {
         _playfieldController->setCurrentCardView(newCurrentCardView);
+    }
+    if (_stackController) {
+        _stackController->setCurrentCardView(newCurrentCardView);
     }
     
     // updated

@@ -8,6 +8,9 @@
 
 USING_NS_CC;
 
+// 前置声明
+class GameView;
+
 /**
  * 手牌堆控制器
  * 负责处理手牌堆区域的所有逻辑，包括翻牌、替换底牌等操作
@@ -118,6 +121,16 @@ public:
      * @param cardView 要注册的卡牌视图
      */
     void registerCardView(CardView* cardView);
+    
+    /**
+     * 设置当前底牌区域节点，用于直接操作底牌区域
+     */
+    void setCurrentCardArea(Node* area) { _currentCardArea = area; }
+    
+    /**
+     * 设置GameView引用，用于同步更新底牌视图
+     */
+    void setGameView(GameView* gameView) { _gameView = gameView; }
 
 protected:
     /**
@@ -145,6 +158,10 @@ private:
     bool _isInitialized;                            // 是否已初始化
     bool _isProcessingOperation;                    // 是否正在处理操作
     bool _initialDealt;                             // 是否已执行过首发动画
+    
+    // 当前底牌相关引用（不拥有，仅引用）
+    Node* _currentCardArea = nullptr;
+    GameView* _gameView = nullptr;
 };
 
 #endif // __STACK_CONTROLLER_H__

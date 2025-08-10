@@ -111,10 +111,8 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
     Vec2 sourcePosition = getWorldPosition(cardView);
     int sourceZOrder = cardView->getLocalZOrder();
     
-    // 获取目标位置
-    Vec2 targetPosition = _currentCardView && _currentCardView->getParent()
-        ? getWorldPosition(_currentCardView)
-        : _configManager->getUILayoutConfig()->getCurrentCardPosition();
+    // 获取目标位置 
+    Vec2 targetPosition = _configManager->getUILayoutConfig()->getCurrentCardPosition();
     
     // 使用BaseController的记录方法
     if (!recordUndoOperationBase(cardModel, currentCard, sourcePosition, targetPosition, 
@@ -135,25 +133,28 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
 
     // 使用BaseController的新方法计算目标位置
-    Vec2 targetWorldPosition = _currentCardView && _currentCardView->getParent()
-        ? getWorldPosition(_currentCardView)
-        : uiLayoutConfig->getCurrentCardPosition();
+    Vec2 targetWorldPosition = uiLayoutConfig->getCurrentCardPosition();
 
     int movedCardId = cardModel->getCardId();
 
     // 使用BaseController的通用动画方法
     moveCardWithAnimation(cardView, targetWorldPosition, 500, [this, callback, movedCardId, cardView](bool success) {
+        // 安全检查：确保控制器仍然有效
+        if (!this || !_gameModel) {
+            if (cardView) {
+                cardView->removeFromParent();
+                cardView->release();
+            }
+            if (callback) callback(false);
+            return;
+        }
+        
         // 动画结束后，替换底牌显示
         if (success) {
             // 如果有底牌区域，直接替换显示
             if (_currentCardArea) {
-                // 移除旧的底牌视图
-                if (_currentCardView && _currentCardView != cardView) {
-                    _currentCardView->removeFromParent();
-                } else {
-                    // 清除底牌区域中的所有子视图
-                    _currentCardArea->removeAllChildren();
-                }
+                // 清除底牌区域中的所有子视图
+                _currentCardArea->removeAllChildren();
                 
                 // 将新卡牌移入底牌区域
                 cardView->retain();
@@ -177,10 +178,6 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
                 // cardView已经绑定了正确的CardModel，重新设置可能导致显示错乱
             } else {
                 // 如果没有底牌区域，保持当前位置
-                if (_currentCardView && _currentCardView != cardView) {
-                    _currentCardView->removeFromParent();
-                }
-                
                 cardView->setEnabled(false); // 当前底牌不可点击
                 cardView->setVisible(true);
             }

@@ -229,6 +229,10 @@ bool GameController::initializeSubControllerViews() {
     
     // 新增：设置GameView引用，用于同步更新
     _playfieldController->setGameView(_gameView);
+    
+    // 新增：为StackController也设置相同的引用
+    _stackController->setCurrentCardArea(_gameView->getCurrentCardArea());
+    _stackController->setGameView(_gameView);
 
     // sub controller views initialized
     return true;
@@ -292,8 +296,8 @@ void GameController::onStackOperationPerformed(bool success, std::shared_ptr<Car
     if (success) {
         // stack op ok
 
-        // 关键修复：更新底牌显示
-        this->updateCurrentCardDisplay();
+        // 注释掉：StackController现在自己处理底牌显示，不需要外部更新
+        // this->updateCurrentCardDisplay();
 
         // 更新桌面牌的可匹配状态
         if (_playfieldController) {
