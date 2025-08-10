@@ -65,6 +65,8 @@ CardGame/
 ├── Resources/                  # 资源文件
 │   ├── configs/               # 配置文件
 │   │   └── data/
+│   │       ├── dispaly/       # 显示相关配置
+│   │       ├── game/          # 游戏全局配置
 │   │       ├── levels/        # 关卡配置
 │   │       └── ui/            # 界面配置
 │   ├── res/                   # 图片资源
