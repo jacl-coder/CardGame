@@ -1,6 +1,7 @@
 # =========================
 # Cocos2d-x CardGame .gitignore
 # =========================
+cocos2d/
 
 # =============== #
 # Unity Generated #

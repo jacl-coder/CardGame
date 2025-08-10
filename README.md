@@ -30,7 +30,7 @@ CardGame 是一个现代化的卡牌游戏项目，专注于提供良好的代�
 
 ## 🛠️ 技术栈
 
-- **游戏引擎**: Cocos2d-x
+- **游戏引擎**: Cocos2d-x 3.17.2
 - **开发语言**: C++
 - **构建工具**: Visual Studio 2022
 - **配置格式**: JSON
@@ -75,6 +75,15 @@ CardGame/
 
 ## 🚀 快速开始
 
+### 依赖说明
+
+本项目未包含 cocos2d-x 引擎源码。请按如下步骤操作：
+
+1. 前往 [cocos2d-x 官方 GitHub](https://github.com/cocos2d/cocos2d-x) 下载对应版本源码。
+2. 将 cocos2d-x 解压或克隆到本项目根目录下，目录名为 `cocos2d`。
+3. 确保 `cocos2d/external` 等依赖库完整。
+4. 然后即可用 Visual Studio 2022 打开/编译本项目。
+
 ### 环境要求
 
 - Visual Studio 2022
@@ -84,12 +93,14 @@ CardGame/
 ### 构建步骤
 
 1. **克隆项目**
+
    ```bash
    git clone https://github.com/jacl-coder/CardGame.git
    cd CardGame
    ```
 
 2. **打开项目**
+
    ```bash
    # 使用 Visual Studio 2022 打开
    start proj.win32/CardGame.sln
@@ -166,11 +177,11 @@ CardGame/
 
 ### 配置文件类型
 
-| 文件 | 用途 | 位置 |
-|------|------|------|
-| `level_*.json` | 关卡配置 | `Resources/configs/data/levels/` |
-| `layout_config.json` | UI布局配置 | `Resources/configs/data/ui/` |
-| `animation_config.json` | 动画配置 | `Resources/configs/data/ui/` |
+| 文件                    | 用途        | 位置                             |
+| ----------------------- | ----------- | -------------------------------- |
+| `level_*.json`          | 关卡配置    | `Resources/configs/data/levels/` |
+| `layout_config.json`    | UI 布局配置 | `Resources/configs/data/ui/`     |
+| `animation_config.json` | 动画配置    | `Resources/configs/data/ui/`     |
 
 ### 配置热更新
 
@@ -210,7 +221,7 @@ public:
 - **类名**: PascalCase (`CardModel`, `GameController`)
 - **函数名**: camelCase (`handleCardClick`, `updateDisplay`)
 - **成员变量**: 下划线前缀 (`_cardModel`, `_isInitialized`)
-- **常量**: k前缀 (`kMaxUndoSteps`, `kDefaultFontSize`)
+- **常量**: k 前缀 (`kMaxUndoSteps`, `kDefaultFontSize`)
 
 ### 文件组织
 
@@ -233,6 +244,19 @@ public:
 - 遵循项目的代码规范
 - 更新相关文档
 
+## 📖 程序设计文档
+
+如需了解详细的技术架构、扩展方法和代码实现，请参阅：
+
+**[DESIGN.md](DESIGN.md)** - 程序设计文档
+
+该文档包含：
+
+- 🏗️ **详细架构设计** - 完整的系统架构和设计模式说明
+- 🔧 **扩展开发指南** - 如何添加新卡牌类型和撤销功能的步骤说明
+- 📋 **代码规范** - 统一的编码标准和最佳实践
+- ⚡ **性能优化** - 针对性的优化建议和实现方法
+
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
@@ -244,18 +268,6 @@ public:
 - 创建 [Issue](../../issues)
 - 发起 [Pull Request](../../pulls)
 - 发送邮件至 [laix1024@gmail.com]
-
-## 📖 程序设计文档
-
-如需了解详细的技术架构、扩展方法和代码实现，请参阅：
-
-**[DESIGN.md](DESIGN.md)** - 程序设计文档
-
-该文档包含：
-- 🏗️ **详细架构设计** - 完整的系统架构和设计模式说明
-- 🔧 **扩展开发指南** - 如何添加新卡牌类型和撤销功能的步骤说明
-- 📋 **代码规范** - 统一的编码标准和最佳实践
-- ⚡ **性能优化** - 针对性的优化建议和实现方法
 
 ---
 
