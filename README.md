@@ -1,68 +1,262 @@
-## 项目说明（程序设计文档）
+# CardGame
 
-本工程是一个使用 Cocos2d-x 的纸牌游戏，仓库包含引擎源码 `cocos2d/` 与 Windows 工程 `proj.win32/`，可在 VS2022 下开箱即用。
+一个基于 Cocos2d-x 引擎开发的卡牌游戏项目，采用现代化的 MVC 架构设计，支持配置驱动的关卡系统和完整的撤销功能。
 
-### 架构概览
-- **模型层（Models）**：`Classes/models/`
-  - `CardModel`：描述卡牌（花色、点数、位置、翻面、ID 等）。
-  - `GameModel`：描述整体游戏状态（桌面牌、手牌堆、底牌、分数、移动次数、关卡等），并提供撤销操作的实际应用方法：`undoCardMove`、`undoCardFlip`、`undoStackOperation`。
-  - `UndoModel`：记录一次可撤销操作的数据；`UndoOperationType` 枚举当前支持 `CARD_MOVE`/`CARD_FLIP`/`STACK_OPERATION`。
-- **控制层（Controllers）**：`Classes/controllers/`
-  - `GameController`：总控，负责关卡加载、模型生成、子控制器/视图初始化与整体流程（含 `performUndo`）。
-  - `PlayFieldController`：桌面牌逻辑与交互（点击、匹配、动画、撤销记录）。
-  - `StackController`：手牌堆逻辑与交互（翻牌、替换底牌、动画、撤销记录）。
-- **视图层（Views）**：`Classes/views/`
-  - `GameView`：主视图，持有各区域节点与 `CardView` 列表，转发点击/回退等交互。
-  - `CardView`：单张卡牌的渲染、触摸与动画，绑定一个 `CardModel`。
-- **配置与生成（Configs/Services）**：`Classes/configs` 与 `Classes/services`
-  - `ConfigManager` 统一加载字体、UI、规则、布局、显示配置；`GameModelFromLevelGenerator` 根据关卡配置生成初始 `GameModel`。
-- **管理器（Managers）**：
-  - `UndoManager`：维护撤销栈，提供 `recordUndo`、`performUndo`、`canUndo`、`getUndoSummary` 等。
+## 📋 目录
 
-数据流与依赖关系简述：`GameController` 协调 `GameView` 与各控制器；控制器读写 `GameModel` 并通过 `UndoManager` 记录/执行撤销；`CardView` 负责具体渲染与动画；`ConfigManager` 提供全局配置。
+- [项目简介](#项目简介)
+- [特性](#特性)
+- [技术栈](#技术栈)
+- [项目结构](#项目结构)
+- [快速开始](#快速开始)
+- [架构设计](#架构设计)
+- [配置系统](#配置系统)
+- [开发指南](#开发指南)
+- [贡献指南](#贡献指南)
+- [程序设计文档](#程序设计文档)
 
-### 如何新增一张卡牌（资源与显示）
-1. 资源准备（`Resources/res/`）：
-   - 数字贴图：`number/` 下新增所需牌面图片（若使用现有即无需新增）。
-   - 花色贴图：`suits/` 下若新增花色，需添加对应 PNG。
-2. 模型更新（如新增花色或点数）：
-   - 在 `CardModel.h` 的 `CardSuitType`/`CardFaceType` 中添加枚举值，并在 `getSuitSymbol`/`getFaceSymbol`、`getCardValue`、`canMatchWith` 中补充处理逻辑（若规则有变化）。
-3. 关卡/布局配置：
-   - 在 `Resources/configs/data/levels/` 或相关配置中，加入该卡牌的初始位置/归属（桌面、手牌堆）。
-   - 若需 UI 布局调整，修改 `Resources/configs/data/ui/*.json`。
-4. 生成与显示：
-   - `GameModelFromLevelGenerator` 根据关卡配置创建对应的 `CardModel` 并放入 `GameModel`。
-   - `GameView` 初始化时会为每个 `CardModel` 生成 `CardView` 并注册点击，`CardView::updateDisplay`/`updateCardLayout` 会根据资源自动布局。
+## 🎮 项目简介
 
-最小化新增场景：仅新增一张普通卡到关卡中，一般无需改代码，只需改关卡配置即可；如新增“花色/点数类型”，才需要按第 2 步扩展 `CardModel`。
+CardGame 是一个现代化的卡牌游戏项目，专注于提供良好的代码架构和可扩展性。项目采用分层设计，通过 JSON 配置文件驱动游戏内容，支持完整的撤销系统，便于快速开发和维护。
 
-### 如何新增一种“回退（Undo）”类型
-目标：在现有 `CARD_MOVE`/`CARD_FLIP`/`STACK_OPERATION` 之外新增一种回退。例如“交换两张桌面牌”（示例）。
+## ✨ 特性
 
-步骤：
-1. 定义新类型：
-   - 在 `UndoModel.h` 的 `UndoOperationType` 中新增枚举值，如 `SWAP_PLAYFIELD`。
-2. 扩展 UndoModel 数据：
-   - 视需求在 `UndoModel` 中新增字段（例如第二张卡的引用、原始位置/状态等），并在 `toJson`/`fromJson` 序列化中补充。
-   - 提供静态建造方法，例如 `createSwapPlayfieldAction(cardA, cardB, posA, posB)`。
-3. 记录撤销：
-   - 在触发该操作的控制器里（如 `PlayFieldController`），完成业务动作时调用 `UndoManager::recordUndo(...)` 记录上述 `UndoModel`。
-4. 应用撤销：
-   - 在 `GameModel` 中新增处理函数（或复用一个分发）：实现 `bool undoSwapPlayfield(std::shared_ptr<UndoModel>)`，执行模型层面的状态复原（位置/翻面/分数/计数等）。
-   - 在 `UndoManager::applyUndoToGameModel` 的分发中，增加对新类型的分支，调用 `gameModel->undoSwapPlayfield(...)`。
-5. 视图复原（可选动画）：
-   - 在 `GameController` 中的撤销动画分发（如 `performPlayfieldCardUndoAnimation`）里，为新类型添加相应的视图恢复逻辑，调用 `GameView`/`CardView` 播放动画并最终与模型一致。
+- 🏗️ **模块化架构** - 采用 MVC 模式，各层职责明确
+- ⚙️ **配置驱动** - 关卡内容通过 JSON 文件配置，支持热更新
+- ↩️ **完整撤销系统** - 基于命令模式的撤销功能
+- 🎯 **高可扩展性** - 易于添加新卡牌类型和游戏规则
+- 📱 **跨平台支持** - 基于 Cocos2d-x，支持多平台部署
+- 🎨 **现代化 UI** - 流畅的动画效果和用户体验
 
-验收建议：
-- 单元测试或日志：使用 `UndoManager::getUndoSummary()` 打印最近操作摘要，确认记录与回退一致。
-- 手动测试：先执行新操作，再点击回退按钮，观察模型与视图一致性。
+## 🛠️ 技术栈
 
-### 代码规范与扩展建议
-- 模型与视图分离：所有状态变更先落在 `GameModel`，视图仅渲染与动画。
-- 撤销的三要素：源/目标卡、位置信息、可选的 z 序与翻面状态、分数变动、时间戳。
-- 控制器职责单一：桌面牌逻辑进 `PlayFieldController`，手牌堆逻辑进 `StackController`，统一协调通过 `GameController`。
-- 配置驱动：优先通过 JSON 配置新增内容，减少改动代码。
+- **游戏引擎**: Cocos2d-x
+- **开发语言**: C++
+- **构建工具**: Visual Studio 2022
+- **配置格式**: JSON
+- **架构模式**: MVC + 配置驱动
 
-### Windows（VS2022）构建
-仓库仅保留 `proj.win32/`，引擎随仓库提供，直接打开 `proj.win32/CardGame.sln` 构建运行。
+## 📁 项目结构
 
+```
+CardGame/
+├── Classes/                    # 核心代码
+│   ├── models/                # 数据模型层
+│   │   ├── CardModel.*        # 卡牌数据模型
+│   │   ├── GameModel.*        # 游戏状态模型
+│   │   └── UndoModel.*        # 撤销操作模型
+│   ├── views/                 # 视图表现层
+│   │   ├── CardView.*         # 卡牌视图组件
+│   │   └── GameView.*         # 游戏主视图
+│   ├── controllers/           # 控制逻辑层
+│   │   ├── BaseController.*   # 控制器基类
+│   │   ├── GameController.*   # 游戏主控制器
+│   │   ├── PlayFieldController.*  # 桌面牌控制器
+│   │   └── StackController.*  # 手牌堆控制器
+│   ├── managers/              # 管理器层
+│   │   ├── ConfigManager.*    # 配置管理器
+│   │   └── UndoManager.*      # 撤销管理器
+│   ├── services/              # 业务服务层
+│   │   └── GameModelFromLevelGenerator.*
+│   ├── configs/               # 配置系统
+│   │   ├── models/            # 配置数据模型
+│   │   └── loaders/           # 配置加载器
+│   └── utils/                 # 工具类
+├── Resources/                  # 资源文件
+│   ├── configs/               # 配置文件
+│   │   └── data/
+│   │       ├── levels/        # 关卡配置
+│   │       └── ui/            # 界面配置
+│   ├── res/                   # 图片资源
+│   └── fonts/                 # 字体文件
+├── cocos2d/                    # Cocos2d-x 引擎源码
+└── proj.win32/                # Windows 项目文件
+```
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Visual Studio 2022
+- Cocos2d-x 引擎
+- Windows 10/11
+
+### 构建步骤
+
+1. **克隆项目**
+   ```bash
+   git clone <repository-url>
+   cd CardGame
+   ```
+
+2. **打开项目**
+   ```bash
+   # 使用 Visual Studio 2022 打开
+   start proj.win32/CardGame.sln
+   ```
+
+3. **构建运行**
+   - 选择 Debug/Release 配置
+   - 按 F5 运行项目
+
+### 配置关卡
+
+编辑 `Resources/configs/data/levels/level_1.json` 来自定义关卡：
+
+```json
+{
+  "LevelId": 1,
+  "LevelName": "Level 1",
+  "Playfield": [
+    {
+      "CardFace": 0,
+      "CardSuit": 3,
+      "Position": { "x": 250, "y": 1000 }
+    }
+  ],
+  "Stack": [
+    {
+      "CardFace": 12,
+      "CardSuit": 2,
+      "Position": { "x": 0, "y": 0 }
+    }
+  ]
+}
+```
+
+## 🏗️ 架构设计
+
+### 设计原则
+
+- **单一职责原则** - 每个类只负责一个明确的功能
+- **依赖注入** - 通过构造函数和初始化方法注入依赖
+- **配置驱动** - 游戏规则和布局通过 JSON 配置文件控制
+- **事件驱动** - 使用回调函数实现组件间解耦
+
+### 核心架构
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Controllers   │    │     Views       │    │     Models      │
+│                 │    │                 │    │                 │
+│ • GameController│────│ • GameView      │────│ • GameModel     │
+│ • PlayFieldCtrl │    │ • CardView      │    │ • CardModel     │
+│ • StackCtrl     │    │                 │    │ • UndoModel     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                        ┌─────────────────┐
+                        │    Managers     │
+                        │                 │
+                        │ • ConfigManager │
+                        │ • UndoManager   │
+                        └─────────────────┘
+```
+
+### 数据流
+
+1. **配置加载**: ConfigManager 加载 JSON 配置文件
+2. **模型初始化**: GameModelFromLevelGenerator 根据配置生成 GameModel
+3. **视图创建**: GameView 根据 GameModel 创建视图组件
+4. **用户交互**: Controllers 处理用户输入，更新 Models
+5. **视图更新**: Views 监听 Models 变化，自动刷新显示
+
+## ⚙️ 配置系统
+
+### 配置文件类型
+
+| 文件 | 用途 | 位置 |
+|------|------|------|
+| `level_*.json` | 关卡配置 | `Resources/configs/data/levels/` |
+| `layout_config.json` | UI布局配置 | `Resources/configs/data/ui/` |
+| `animation_config.json` | 动画配置 | `Resources/configs/data/ui/` |
+
+### 配置热更新
+
+配置文件支持运行时重新加载，无需重启游戏即可看到配置变更效果。
+
+## 📚 开发指南
+
+### 添加新关卡
+
+1. 在 `Resources/configs/data/levels/` 创建新的 JSON 文件
+2. 按照现有格式配置卡牌布局
+3. 在游戏中调用 `GameController::startGame(levelId)` 加载关卡
+
+### 扩展卡牌类型
+
+1. 在 `CardModel.h` 中扩展枚举类型
+2. 更新 `CardView` 的渲染逻辑
+3. 在游戏规则中添加匹配逻辑
+4. 更新配置文件格式
+
+### 自定义控制器
+
+继承 `BaseController` 类，实现特定的游戏逻辑：
+
+```cpp
+class CustomController : public BaseController {
+public:
+    bool init(/* parameters */) override;
+    void handleCustomLogic();
+};
+```
+
+## 🔧 代码规范
+
+### 命名约定
+
+- **类名**: PascalCase (`CardModel`, `GameController`)
+- **函数名**: camelCase (`handleCardClick`, `updateDisplay`)
+- **成员变量**: 下划线前缀 (`_cardModel`, `_isInitialized`)
+- **常量**: k前缀 (`kMaxUndoSteps`, `kDefaultFontSize`)
+
+### 文件组织
+
+- 头文件(.h)和实现文件(.cpp)分离
+- 按功能模块组织目录结构
+- 每个类一个文件，文件名与类名一致
+
+## 🤝 贡献指南
+
+1. **Fork** 项目到你的 GitHub 账户
+2. **创建** 功能分支 (`git checkout -b feature/AmazingFeature`)
+3. **提交** 你的修改 (`git commit -m 'Add some AmazingFeature'`)
+4. **推送** 到分支 (`git push origin feature/AmazingFeature`)
+5. **创建** Pull Request
+
+### 提交规范
+
+- 使用清晰的提交信息
+- 确保代码通过所有测试
+- 遵循项目的代码规范
+- 更新相关文档
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+## 📞 联系方式
+
+如果你有任何问题或建议，欢迎：
+
+- 创建 [Issue](../../issues)
+- 发起 [Pull Request](../../pulls)
+- 发送邮件至 [laix1024@gmail.com]
+
+## 📖 程序设计文档
+
+如需了解详细的技术架构、扩展方法和代码实现，请参阅：
+
+**[DESIGN.md](DESIGN.md)** - 程序设计文档
+
+该文档包含：
+- 🏗️ **详细架构设计** - 完整的系统架构和设计模式说明
+- 🔧 **扩展开发指南** - 如何添加新卡牌类型和撤销功能的步骤说明
+- 📋 **代码规范** - 统一的编码标准和最佳实践
+- ⚡ **性能优化** - 针对性的优化建议和实现方法
+
+---
+
+⭐ 如果这个项目对你有帮助，请给它一个星标！
