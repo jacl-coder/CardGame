@@ -200,7 +200,6 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
             
             // 关键修复：从GameModel的桌面卡牌列表中移除
             _gameModel->removePlayfieldCard(movedCardId);
-            CCLOG("PlayFieldController::replaceTrayWithPlayFieldCard - Removed card from playfield model: %d", movedCardId);
             
             // 注意：不调用cardView->updateDisplay()，因为它会重置位置为model中的位置
         } else {
@@ -213,9 +212,6 @@ bool PlayFieldController::replaceTrayWithPlayFieldCard(int cardId, const Animati
 
         if (callback) callback(success);
     });
-    
-    CCLOG("PlayFieldController::replaceTrayWithPlayFieldCard - Started replacement for card: %s", 
-          cardModel->toString().c_str());
     
     return true;
 }
@@ -264,9 +260,6 @@ void PlayFieldController::highlightMatchableCards(bool highlight) {
             cardView->setHighlighted(highlight);
         }
     }
-    
-    CCLOG("PlayFieldController::highlightMatchableCards - %s %zu cards", 
-          highlight ? "Highlighted" : "Unhighlighted", matchableCards.size());
 }
 
 CardView* PlayFieldController::getCardView(int cardId) const {
@@ -276,7 +269,6 @@ CardView* PlayFieldController::getCardView(int cardId) const {
 
 void PlayFieldController::registerCardView(CardView* cardView) {
     if (!cardView || !cardView->getCardModel()) {
-        CCLOG("PlayFieldController::registerCardView - Invalid card view");
         return;
     }
     
@@ -292,9 +284,6 @@ void PlayFieldController::registerCardView(CardView* cardView) {
     cardView->setCardClickCallback([this](CardView* view, std::shared_ptr<CardModel> model) {
         onCardClicked(view, model);
     });
-    
-    CCLOG("PlayFieldController::registerCardView - Registered card %s (ID: %d)", 
-          cardView->getCardModel()->toString().c_str(), cardId);
 }
 
 void PlayFieldController::updateDisplay() {

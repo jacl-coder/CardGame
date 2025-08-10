@@ -80,7 +80,6 @@ bool StackController::handleTopCardClick(const StackOperationCallback& callback)
 
 bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callback) {
     if (!_isInitialized) {
-        CCLOG("StackController::replaceCurrentWithTopCard - Controller not initialized");
         if (callback) callback(false);
         return false;
     }
@@ -89,7 +88,6 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
     auto topCardView = getTopCardView();
     
     if (!topCard || !topCardView) {
-        CCLOG("StackController::replaceCurrentWithTopCard - No top card available");
         if (callback) callback(false);
         return false;
     }
@@ -112,7 +110,6 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
     // 使用BaseController的记录方法
     if (!recordUndoOperationBase(topCard, currentCard, sourcePosition, targetPosition, 
                                 sourceStackIndex, sourceZOrder, UndoOperationType::STACK_OPERATION)) {
-        CCLOG("StackController::replaceCurrentWithTopCard - Failed to record undo");
         if (callback) callback(false);
         return false;
     }
@@ -147,7 +144,6 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
     moveCardWithAnimation(topCardView, targetWorldPosition, 500, [this, callback, topCardId, topCardView](bool success) {
         // 安全检查：确保对象仍然有效
         if (!this || !_gameModel) {
-            CCLOG("StackController::replaceCurrentWithTopCard - Animation callback: Controller or model invalid!");
             if (topCardView) {
                 topCardView->removeFromParent();
                 topCardView->release();
@@ -265,47 +261,29 @@ void StackController::updateCurrentCardDisplay() {
 }
 
 void StackController::onStackCardClicked(CardView* cardView, std::shared_ptr<CardModel> cardModel) {
-    CCLOG("StackController::onStackCardClicked - ENTRY");
-    CCLOG("  cardView: %p, cardModel: %p", cardView, cardModel.get());
-    CCLOG("  _isInitialized: %s", _isInitialized ? "true" : "false");
-    
     if (!cardView || !cardModel) {
-        CCLOG("StackController::onStackCardClicked - Invalid parameters, exiting");
         return;
     }
     
-    CCLOG("StackController::onStackCardClicked - Stack card clicked: %s", cardModel->toString().c_str());
-    CCLOG("  CardView enabled state: %s", cardView->isEnabled() ? "ENABLED" : "DISABLED");
-    
     // 检查卡牌是否被禁用
     if (!cardView->isEnabled()) {
-        CCLOG("StackController::onStackCardClicked - Card is disabled, ignoring click");
         return;
     }
     
     // 只有顶部卡牌可以点击
     auto topCard = getTopCard();
-    CCLOG("  Current top card: %s", topCard ? topCard->toString().c_str() : "null");
-    
     if (!topCard || topCard->getCardId() != cardModel->getCardId()) {
-        CCLOG("StackController::onStackCardClicked - Only top card can be clicked (clicked: %d, top: %d)", 
-              cardModel->getCardId(), 
-              topCard ? topCard->getCardId() : -1);
         return;
     }
-    
-    CCLOG("StackController::onStackCardClicked - Valid top card click, proceeding...");
     
     // 处理顶部卡牌点击
     handleTopCardClick([this](bool success, std::shared_ptr<CardModel> card) {
         if (success) {
-            CCLOG("StackController::onStackCardClicked - Stack operation successful");
             // 通知外部回调
             if (_stackOperationCallback) {
                 _stackOperationCallback(true, card);
             }
         } else {
-            CCLOG("StackController::onStackCardClicked - Stack operation failed");
             if (_stackOperationCallback) {
                 _stackOperationCallback(false, card);
             }
@@ -314,38 +292,24 @@ void StackController::onStackCardClicked(CardView* cardView, std::shared_ptr<Car
 }
 
 void StackController::updateStackInteractivity() {
-    CCLOG("StackController::updateStackInteractivity - Starting");
-    
     // 安全检查
     if (!_gameModel) {
-        CCLOG("StackController::updateStackInteractivity - GameModel is null, aborting");
         return;
     }
     
-    CCLOG("  _stackCardViews size: %zu", _stackCardViews.size());
-    CCLOG("  _cardViewMap size: %zu", _cardViewMap.size());
-    
     // 只有顶部卡牌可以交互
     auto topCard = getTopCard();
-    CCLOG("  Top card from model: %s", topCard ? topCard->toString().c_str() : "null");
     
     for (auto cardView : _stackCardViews) {
         if (cardView && cardView->getCardModel()) {
             bool isTopCard = topCard && (cardView->getCardModel()->getCardId() == topCard->getCardId());
             cardView->setEnabled(isTopCard);
-            CCLOG("    Card ID %d, View %p: %s", 
-                  cardView->getCardModel()->getCardId(), 
-                  cardView,
-                  isTopCard ? "ENABLED" : "disabled");
         }
     }
-    
-    CCLOG("StackController::updateStackInteractivity - Complete");
 }
 
 void StackController::registerCardView(CardView* cardView) {
     if (!cardView || !cardView->getCardModel()) {
-        CCLOG("StackController::registerCardView - Invalid card view");
         return;
     }
     
@@ -354,8 +318,6 @@ void StackController::registerCardView(CardView* cardView) {
     // 检查是否已经注册过
     auto existingIt = _cardViewMap.find(cardId);
     if (existingIt != _cardViewMap.end()) {
-        CCLOG("StackController::registerCardView - Card %d already registered, updating view", cardId);
-        
         // 从列表中移除旧视图
         auto listIt = std::find(_stackCardViews.begin(), _stackCardViews.end(), existingIt->second);
         if (listIt != _stackCardViews.end()) {
@@ -376,45 +338,23 @@ void StackController::registerCardView(CardView* cardView) {
     
     // 更新交互性（确保只有栈顶卡牌可以点击）
     updateStackInteractivity();
-    
-    CCLOG("StackController::registerCardView - Registered card %s (ID: %d)", 
-          cardView->getCardModel()->toString().c_str(), cardId);
 }
 
 bool StackController::initialDealCurrentFromStack() {
-    CCLOG("StackController::initialDealCurrentFromStack - Starting initialization");
-    CCLOG("  _initialDealt: %s, _isInitialized: %s", 
-          _initialDealt ? "true" : "false", 
-          _isInitialized ? "true" : "false");
-    
     if (_initialDealt || !_isInitialized) {
-        CCLOG("StackController::initialDealCurrentFromStack - Early return: already dealt or not initialized");
         return false;
     }
 
     // 若已有当前底牌（栈不为空）则不执行
     bool stackEmpty = _gameModel->isCurrentCardStackEmpty();
-    CCLOG("StackController::initialDealCurrentFromStack - Stack empty: %s", stackEmpty ? "true" : "false");
-    
     if (!stackEmpty) {
-        CCLOG("StackController::initialDealCurrentFromStack - Stack not empty, skipping initialization");
-        const auto& stack = _gameModel->getCurrentCardStack();
-        CCLOG("  Current stack size: %zu", stack.size());
-        for (size_t i = 0; i < stack.size(); i++) {
-            CCLOG("    Stack[%zu]: %s", i, stack[i]->toString().c_str());
-        }
         return false;
     }
 
     auto topCard = getTopCard();
     auto topCardView = getTopCardView();
     
-    CCLOG("StackController::initialDealCurrentFromStack - Top card: %s", 
-          topCard ? topCard->toString().c_str() : "null");
-    CCLOG("StackController::initialDealCurrentFromStack - Top card view: %p", topCardView);
-    
     if (!topCard || !topCardView) {
-        CCLOG("StackController::initialDealCurrentFromStack - No top card or view available, aborting");
         return false;
     }
 
@@ -423,12 +363,6 @@ bool StackController::initialDealCurrentFromStack() {
     
     // 从手牌栈中移除这张卡牌
     _gameModel->removeTopStackCard();
-    CCLOG("StackController::initialDealCurrentFromStack - Removed card from stack, pushed to current card stack");
-    
-    // 验证栈状态
-    auto newTopCard = getTopCard();
-    CCLOG("  New top card after removal: %s", newTopCard ? newTopCard->toString().c_str() : "null");
-    CCLOG("  Stack size after removal: %zu", _gameModel->getStackCards().size());
 
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
     Vec2 targetWorldPosition = uiLayoutConfig->getCurrentCardPosition();
@@ -437,16 +371,10 @@ bool StackController::initialDealCurrentFromStack() {
     Node* srcParent = topCardView->getParent();
     Node* overlayParent = (srcParent && srcParent->getParent()) ? srcParent->getParent() : srcParent;
 
-    CCLOG("StackController::initialDealCurrentFromStack - Animation setup:");
-    CCLOG("  targetWorldPosition: (%.2f, %.2f)", targetWorldPosition.x, targetWorldPosition.y);
-    CCLOG("  srcParent: %p, overlayParent: %p", srcParent, overlayParent);
-
     int topCardId = topCard->getCardId();
 
     // 使用BaseController的通用动画方法
     moveCardWithAnimation(topCardView, targetWorldPosition, 500, [this, topCardView, topCardId, overlayParent](bool success){
-        CCLOG("StackController::initialDealCurrentFromStack - Animation callback called, success: %s", 
-              success ? "true" : "false");
         
         // 动画完成，卡牌已经在正确位置
         if (success) {
@@ -455,7 +383,6 @@ bool StackController::initialDealCurrentFromStack() {
             
             // 保存当前位置（动画已经移动到的正确位置）
             Vec2 currentPosition = topCardView->getPosition();
-            CCLOG("  Final card position: (%.2f, %.2f)", currentPosition.x, currentPosition.y);
             
             topCardView->removeFromParent();
             
@@ -467,12 +394,10 @@ bool StackController::initialDealCurrentFromStack() {
                 Vec2 localPos = currentCardArea->convertToNodeSpace(currentPosition);
                 currentCardArea->addChild(topCardView, 300); // 当前底牌层
                 topCardView->setPosition(localPos);
-                CCLOG("  Added card to currentCardArea at local position: (%.2f, %.2f)", localPos.x, localPos.y);
             } else {
                 // 备用方案：直接添加到 GameView
                 overlayParent->addChild(topCardView, 300);
                 topCardView->setPosition(currentPosition);
-                CCLOG("  Added card to overlayParent at position: (%.2f, %.2f)", currentPosition.x, currentPosition.y);
             }
             
             topCardView->setEnabled(false);
@@ -484,12 +409,8 @@ bool StackController::initialDealCurrentFromStack() {
             if (it != _stackCardViews.end()) _stackCardViews.erase(it);
             
             // 立即更新交互状态，让新的栈顶卡牌可点击
-            CCLOG("StackController::initialDealCurrentFromStack - About to update stack interactivity");
-            CCLOG("  _stackCardViews size after removal: %zu", _stackCardViews.size());
-            CCLOG("  _cardViewMap size after removal: %zu", _cardViewMap.size());
             updateStackInteractivity();
         } else {
-            CCLOG("  Animation failed, removing card");
             topCardView->removeFromParent();
         }
 
@@ -497,8 +418,6 @@ bool StackController::initialDealCurrentFromStack() {
         revealNextCard();
         updateStackInteractivity();
         updateCurrentCardDisplay();
-        
-        CCLOG("StackController::initialDealCurrentFromStack - Initialization complete");
     });
 
     _initialDealt = true;
