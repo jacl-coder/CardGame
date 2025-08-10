@@ -200,12 +200,12 @@ void GameScene::initLevelSelectUI() {
         size_t slash = filename.find_last_of("/");
         std::string name = (slash == std::string::npos) ? filename : filename.substr(slash + 1);
         if (name.size() < 12) return -1; // 最小长度粗略检查
-        const std::string prefix = "level_";
-        const std::string suffix = ".json";
-        if (name.rfind(prefix, 0) != 0) return -1; // 必须以 level_ 开头
-        if (name.size() <= prefix.size() + suffix.size()) return -1;
-        if (name.substr(name.size() - suffix.size()) != suffix) return -1;
-        std::string idPart = name.substr(prefix.size(), name.size() - prefix.size() - suffix.size());
+        const std::string kPrefix = "level_";
+        const std::string kSuffix = ".json";
+        if (name.rfind(kPrefix, 0) != 0) return -1; // 必须以 level_ 开头
+        if (name.size() <= kPrefix.size() + kSuffix.size()) return -1;
+        if (name.substr(name.size() - kSuffix.size()) != kSuffix) return -1;
+        std::string idPart = name.substr(kPrefix.size(), name.size() - kPrefix.size() - kSuffix.size());
         for (char c : idPart) { if (c < '0' || c > '9') return -1; }
         return idPart.empty() ? -1 : atoi(idPart.c_str());
     };
@@ -230,15 +230,15 @@ void GameScene::initLevelSelectUI() {
     std::vector<MenuItem*> items;
     items.reserve(levelIds.size());
 
-    const float fontSize = 48.0f;
-    const float gapY = 150.0f; // 拉开间距
-    const float centerX = origin.x + visibleSize.width * 0.5f;
-    const float totalHeight = (levelIds.empty() ? 0.0f : (static_cast<float>(levelIds.size() - 1) * gapY));
-    const float startY = origin.y + visibleSize.height * 0.5f + totalHeight * 0.5f + 20.0f; // 略微上移
+    const float kFontSize = 48.0f;
+    const float kGapY = 150.0f; // 拉开间距
+    const float kCenterX = origin.x + visibleSize.width * 0.5f;
+    const float kTotalHeight = (levelIds.empty() ? 0.0f : (static_cast<float>(levelIds.size() - 1) * kGapY));
+    const float kStartY = origin.y + visibleSize.height * 0.5f + kTotalHeight * 0.5f + 20.0f; // 略微上移
 
     for (size_t i = 0; i < levelIds.size(); ++i) {
         int levelId = levelIds[i];
-        auto label = Label::createWithTTF(StringUtils::format("Level %d", levelId), "fonts/Marker Felt.ttf", fontSize);
+        auto label = Label::createWithTTF(StringUtils::format("Level %d", levelId), "fonts/Marker Felt.ttf", kFontSize);
         label->setColor(Color3B::WHITE);
 
         // 计算按钮尺寸（根据文字大小添加内边距）
@@ -257,7 +257,7 @@ void GameScene::initLevelSelectUI() {
             bg->drawRect(Vec2(0.5f, 0.5f), Vec2(btnSize.width - 0.5f, btnSize.height - 0.5f), borderColor);
             container->addChild(bg);
             // 文本
-            auto text = Label::createWithTTF(StringUtils::format("Level %d", levelId), "fonts/Marker Felt.ttf", fontSize);
+            auto text = Label::createWithTTF(StringUtils::format("Level %d", levelId), "fonts/Marker Felt.ttf", kFontSize);
             text->setColor(Color3B::WHITE);
             text->setPosition(Vec2(btnSize.width * 0.5f, btnSize.height * 0.5f));
             container->addChild(text, 1);
@@ -277,7 +277,7 @@ void GameScene::initLevelSelectUI() {
         auto item = MenuItemSprite::create(normalNode, selectedNode, nullptr, [this, levelId](Ref*) {
             this->startLevel(levelId);
         });
-        item->setPosition(Vec2(centerX, startY - static_cast<float>(i) * gapY));
+        item->setPosition(Vec2(kCenterX, kStartY - static_cast<float>(i) * kGapY));
         items.push_back(item);
     }
 
