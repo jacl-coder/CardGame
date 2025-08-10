@@ -158,6 +158,7 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)\Resources\" /D /E /I /F /Y
     <ClCompile Include="..\Classes\views\CardView.cpp" />
     <ClCompile Include="..\Classes\views\GameView.cpp" />
     <ClCompile Include="..\Classes\controllers\GameController.cpp" />
+    <ClCompile Include="..\Classes\controllers\BaseController.cpp" />
     <ClCompile Include="..\Classes\controllers\PlayFieldController.cpp" />
     <ClCompile Include="..\Classes\controllers\StackController.cpp" />
     <ClCompile Include="..\Classes\controllers\UndoController.cpp" />
@@ -183,6 +184,7 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)\Resources\" /D /E /I /F /Y
     <ClInclude Include="..\Classes\views\CardView.h" />
     <ClInclude Include="..\Classes\views\GameView.h" />
     <ClInclude Include="..\Classes\controllers\GameController.h" />
+    <ClInclude Include="..\Classes\controllers\BaseController.h" />
     <ClInclude Include="..\Classes\controllers\PlayFieldController.h" />
     <ClInclude Include="..\Classes\controllers\StackController.h" />
     <ClInclude Include="..\Classes\controllers\UndoController.h" />

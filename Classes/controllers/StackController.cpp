@@ -2,9 +2,7 @@
 #include <algorithm>
 
 StackController::StackController()
-    : _gameModel(nullptr)
-    , _undoManager(nullptr)
-    , _configManager(nullptr)
+    : BaseController()
     , _currentCardView(nullptr)
     , _isInitialized(false)
     , _isProcessingOperation(false)
@@ -15,18 +13,9 @@ StackController::~StackController() {
 }
 
 bool StackController::init(std::shared_ptr<GameModel> gameModel, UndoManager* undoManager) {
-    if (!gameModel || !undoManager) {
-        CCLOG("StackController::init - Invalid parameters");
-        return false;
-    }
-
-    _gameModel = gameModel;
-    _undoManager = undoManager;
-
-    // 获取配置管理器
-    _configManager = ConfigManager::getInstance();
-    if (!_configManager) {
-        CCLOG("StackController::init - Failed to get ConfigManager");
+    // 调用基类初始化
+    if (!initBase(gameModel, undoManager)) {
+        CCLOG("StackController::init - Base initialization failed");
         return false;
     }
 
@@ -107,7 +96,22 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
     
     // 1. 记录撤销操作
     auto currentCard = _gameModel->getCurrentCard();
-    if (!recordUndoOperation(topCard, currentCard)) {
+    
+    // 获取源卡牌位置信息
+    Vec2 sourcePosition = getWorldPosition(topCardView);
+    int sourceZOrder = topCardView->getLocalZOrder();
+    
+    // 获取目标位置
+    auto uiLayoutConfig = _configManager->getUILayoutConfig();
+    Vec2 targetPosition = uiLayoutConfig->getCurrentCardPosition();
+    
+    // 计算手牌堆中的索引
+    const auto& stackCards = _gameModel->getStackCards();
+    int sourceStackIndex = stackCards.empty() ? 0 : static_cast<int>(stackCards.size() - 1);
+    
+    // 使用BaseController的记录方法
+    if (!recordUndoOperationBase(topCard, currentCard, sourcePosition, targetPosition, 
+                                sourceStackIndex, sourceZOrder, UndoOperationType::STACK_OPERATION)) {
         CCLOG("StackController::replaceCurrentWithTopCard - Failed to record undo");
         if (callback) callback(false);
         return false;
@@ -118,19 +122,8 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
     
     // 栈信息（调试日志已移除）
     
-    // 3. 执行动画：顶部手牌移动到配置的底牌位置（不依赖 _currentCardView，避免悬挂指针）
-    auto uiLayoutConfig = _configManager->getUILayoutConfig();
-
-    cocos2d::Node* srcParent = topCardView->getParent();
-    // 选择 GameView 作为 overlayParent：stackArea 的父节点通常即 GameView
-    cocos2d::Node* overlayParent = (srcParent && srcParent->getParent()) ? srcParent->getParent() : srcParent;
-
-    cocos2d::Vec2 worldStart = srcParent->convertToWorldSpace(topCardView->getPosition());
-    // 目标直接使用配置坐标（GameView坐标）
-    cocos2d::Vec2 worldTarget = uiLayoutConfig->getCurrentCardPosition();
-
-    cocos2d::Vec2 startInOverlay = overlayParent->convertToNodeSpace(worldStart);
-    cocos2d::Vec2 targetInOverlay = overlayParent->convertToNodeSpace(worldTarget);
+    // 3. 执行动画：顶部手牌移动到配置的底牌位置
+    Vec2 targetWorldPosition = targetPosition; // 重用之前计算的目标位置
 
     // 在动画开始前，立即从『模型与容器』移除栈顶手牌，以便立刻启用下一张手牌（支持连续点击）
     int topCardId = topCard->getCardId();
@@ -150,14 +143,8 @@ bool StackController::replaceCurrentWithTopCard(const AnimationCallback& callbac
     revealNextCard();
     updateStackInteractivity();
 
-    // 提升层级并移动，确保覆盖显示（动画期间该视图独立存在，不再受手牌容器管理）
-    topCardView->retain();
-    topCardView->removeFromParent();
-    overlayParent->addChild(topCardView, 500); // 动画层
-    topCardView->setPosition(startInOverlay);
-    topCardView->setEnabled(false); // 动画期间禁用交互
-
-    playMoveAnimation(topCardView, targetInOverlay, [this, callback, topCardId, topCardView](bool success) {
+    // 使用BaseController的通用动画方法
+    moveCardWithAnimation(topCardView, targetWorldPosition, 500, [this, callback, topCardId, topCardView](bool success) {
         // 安全检查：确保对象仍然有效
         if (!this || !_gameModel) {
             CCLOG("StackController::replaceCurrentWithTopCard - Animation callback: Controller or model invalid!");
@@ -275,63 +262,6 @@ void StackController::updateCurrentCardDisplay() {
     // 由于我们没有直接的回调，这里暂时留空
     // 实际的底牌更新应该在动画完成时由调用方处理
     
-}
-
-bool StackController::recordUndoOperation(std::shared_ptr<CardModel> sourceCard, 
-                                         std::shared_ptr<CardModel> targetCard) {
-    if (!_undoManager || !sourceCard || !targetCard) {
-        return false;
-    }
-
-    // 获取手牌堆顶部卡牌的实际显示位置（相对于GameView的绝对位置）
-    Vec2 sourcePosition = Vec2::ZERO;
-    Vec2 targetPosition = Vec2::ZERO;
-    
-    if (_configManager) {
-        auto uiConfig = _configManager->getUILayoutConfig();
-        if (uiConfig) {
-            // 计算手牌堆顶部卡牌的绝对位置
-            Vec2 stackPos = uiConfig->getStackPosition();
-            float stackOffset = uiConfig->getStackCardOffset();
-            
-            // 假设这是栈顶卡牌，计算其在手牌堆中的位置
-            const auto& stackCards = _gameModel->getStackCards();
-            if (!stackCards.empty()) {
-                size_t topIndex = stackCards.size() - 1;
-                Vec2 relativePos = Vec2(topIndex * stackOffset, 0);
-                sourcePosition = stackPos + relativePos;
-            } else {
-                sourcePosition = stackPos;
-            }
-            
-            // 底牌区域的绝对位置
-            targetPosition = uiConfig->getCurrentCardPosition();
-        }
-    }
-    
-    
-    
-    // 创建撤销记录
-    auto undoModel = UndoModel::createStackToCurrentAction(
-        sourceCard, targetCard,
-        sourcePosition, targetPosition
-    );
-    
-    return _undoManager->recordUndo(undoModel);
-}
-
-void StackController::playMoveAnimation(CardView* sourceView, const Vec2& targetPosition,
-                                       const AnimationCallback& callback) {
-    if (!sourceView) {
-        if (callback) callback(false);
-        return;
-    }
-
-    // 使用配置中的动画时长
-    auto animationConfig = _configManager->getAnimationConfig();
-    sourceView->playMoveAnimation(targetPosition, animationConfig->getMoveAnimationDuration(), [callback]() {
-        if (callback) callback(true);
-    });
 }
 
 void StackController::onStackCardClicked(CardView* cardView, std::shared_ptr<CardModel> cardModel) {
@@ -501,42 +431,26 @@ bool StackController::initialDealCurrentFromStack() {
     CCLOG("  Stack size after removal: %zu", _gameModel->getStackCards().size());
 
     auto uiLayoutConfig = _configManager->getUILayoutConfig();
+    Vec2 targetWorldPosition = uiLayoutConfig->getCurrentCardPosition();
 
-    // 计算动画坐标（提升到GameView层）
+    // 计算动画坐标（提升到GameView层） - 重构前的逻辑
     Node* srcParent = topCardView->getParent();
     Node* overlayParent = (srcParent && srcParent->getParent()) ? srcParent->getParent() : srcParent;
-    
+
     CCLOG("StackController::initialDealCurrentFromStack - Animation setup:");
+    CCLOG("  targetWorldPosition: (%.2f, %.2f)", targetWorldPosition.x, targetWorldPosition.y);
     CCLOG("  srcParent: %p, overlayParent: %p", srcParent, overlayParent);
-    
-    Vec2 worldStart = srcParent->convertToWorldSpace(topCardView->getPosition());
-    Vec2 worldTarget = uiLayoutConfig->getCurrentCardPosition();
-    Vec2 startInOverlay = overlayParent->convertToNodeSpace(worldStart);
-    Vec2 targetInOverlay = overlayParent->convertToNodeSpace(worldTarget);
-
-    CCLOG("  worldStart: (%.2f, %.2f), worldTarget: (%.2f, %.2f)", 
-          worldStart.x, worldStart.y, worldTarget.x, worldTarget.y);
-    CCLOG("  startInOverlay: (%.2f, %.2f), targetInOverlay: (%.2f, %.2f)", 
-          startInOverlay.x, startInOverlay.y, targetInOverlay.x, targetInOverlay.y);
-
-    // 提升层级，播放动画
-    topCardView->retain();
-    topCardView->removeFromParent();
-    overlayParent->addChild(topCardView, 500); // 动画层
-    topCardView->setPosition(startInOverlay);
-    topCardView->setEnabled(false);
-
-    CCLOG("StackController::initialDealCurrentFromStack - Starting animation from (%.2f, %.2f) to (%.2f, %.2f)", 
-          startInOverlay.x, startInOverlay.y, targetInOverlay.x, targetInOverlay.y);
 
     int topCardId = topCard->getCardId();
 
-    playMoveAnimation(topCardView, targetInOverlay, [this, topCardView, topCardId, overlayParent](bool success){
+    // 使用BaseController的通用动画方法
+    moveCardWithAnimation(topCardView, targetWorldPosition, 500, [this, topCardView, topCardId, overlayParent](bool success){
         CCLOG("StackController::initialDealCurrentFromStack - Animation callback called, success: %s", 
               success ? "true" : "false");
         
-        // 动画完成，卡牌已经在正确位置，需要保存位置并重新添加到父节点
+        // 动画完成，卡牌已经在正确位置
         if (success) {
+            // 动画完成，卡牌已经在正确位置，需要保存位置并重新添加到父节点
             topCardView->retain();
             
             // 保存当前位置（动画已经移动到的正确位置）
@@ -553,20 +467,21 @@ bool StackController::initialDealCurrentFromStack() {
                 Vec2 localPos = currentCardArea->convertToNodeSpace(currentPosition);
                 currentCardArea->addChild(topCardView, 300); // 当前底牌层
                 topCardView->setPosition(localPos);
+                CCLOG("  Added card to currentCardArea at local position: (%.2f, %.2f)", localPos.x, localPos.y);
             } else {
                 // 备用方案：直接添加到 GameView
                 overlayParent->addChild(topCardView, 300);
                 topCardView->setPosition(currentPosition);
+                CCLOG("  Added card to overlayParent at position: (%.2f, %.2f)", currentPosition.x, currentPosition.y);
             }
             
             topCardView->setEnabled(false);
-            // 注意：不再在StackController中维护_currentCardView引用，避免悬挂指针
+            topCardView->release();
             
             // 从映射与列表移除，避免重复显示
             _cardViewMap.erase(topCardId);
             auto it = std::find(_stackCardViews.begin(), _stackCardViews.end(), topCardView);
             if (it != _stackCardViews.end()) _stackCardViews.erase(it);
-            topCardView->release();
             
             // 立即更新交互状态，让新的栈顶卡牌可点击
             CCLOG("StackController::initialDealCurrentFromStack - About to update stack interactivity");
@@ -577,7 +492,6 @@ bool StackController::initialDealCurrentFromStack() {
             CCLOG("  Animation failed, removing card");
             topCardView->removeFromParent();
         }
-        topCardView->release();
 
         // 更新交互 & 翻开下一张
         revealNextCard();

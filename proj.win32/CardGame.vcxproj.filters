@@ -96,6 +96,9 @@
     <ClCompile Include="..\Classes\controllers\GameController.cpp">
       <Filter>src\controllers</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\controllers\BaseController.cpp">
+      <Filter>src\controllers</Filter>
+    </ClCompile>
     <ClCompile Include="..\Classes\controllers\PlayFieldController.cpp">
       <Filter>src\controllers</Filter>
     </ClCompile>
@@ -165,6 +168,9 @@
       <Filter>src\views</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\controllers\GameController.h">
+      <Filter>src\controllers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\controllers\BaseController.h">
       <Filter>src\controllers</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\controllers\PlayFieldController.h">

@@ -1,13 +1,7 @@
 #ifndef __STACK_CONTROLLER_H__
 #define __STACK_CONTROLLER_H__
 
-#include "cocos2d.h"
-#include "../models/GameModel.h"
-#include "../models/CardModel.h"
-#include "../models/UndoModel.h"
-#include "../views/CardView.h"
-#include "../managers/UndoManager.h"
-#include "../managers/ConfigManager.h"
+#include "BaseController.h"
 #include <memory>
 #include <vector>
 #include <functional>
@@ -19,7 +13,7 @@ USING_NS_CC;
  * 负责处理手牌堆区域的所有逻辑，包括翻牌、替换底牌等操作
  * 按照README要求：处理手牌堆相关的具体逻辑，连接视图和模型
  */
-class StackController {
+class StackController : public BaseController {
 public:
     /**
      * 手牌操作回调
@@ -27,12 +21,6 @@ public:
      * @param cardModel 操作的卡牌
      */
     using StackOperationCallback = std::function<void(bool success, std::shared_ptr<CardModel> cardModel)>;
-    
-    /**
-     * 动画完成回调
-     * @param success 动画是否成功完成
-     */
-    using AnimationCallback = std::function<void(bool success)>;
     
     /**
      * 构造函数
@@ -133,24 +121,6 @@ public:
 
 protected:
     /**
-     * 记录撤销操作
-     * @param sourceCard 源卡牌（手牌堆顶部）
-     * @param targetCard 目标卡牌（原底牌）
-     * @return 是否记录成功
-     */
-    bool recordUndoOperation(std::shared_ptr<CardModel> sourceCard, 
-                            std::shared_ptr<CardModel> targetCard);
-    
-    /**
-     * 执行卡牌移动动画
-     * @param sourceView 源卡牌视图
-     * @param targetPosition 目标位置
-     * @param callback 完成回调
-     */
-    void playMoveAnimation(CardView* sourceView, const Vec2& targetPosition, 
-                          const AnimationCallback& callback);
-    
-    /**
      * 处理手牌点击的内部逻辑
      * @param cardView 被点击的卡牌视图
      * @param cardModel 卡牌数据模型
@@ -163,11 +133,6 @@ protected:
     void updateStackInteractivity();
 
 private:
-    // 核心组件
-    std::shared_ptr<GameModel> _gameModel;          // 游戏数据模型
-    UndoManager* _undoManager;                      // 撤销管理器
-    ConfigManager* _configManager;                  // 配置管理器
-
     // 视图组件
     std::vector<CardView*> _stackCardViews;         // 手牌堆视图列表
     CardView* _currentCardView;                     // 当前底牌视图
