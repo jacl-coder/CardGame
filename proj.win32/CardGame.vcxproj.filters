@@ -102,6 +102,9 @@
     <ClCompile Include="..\Classes\controllers\StackController.cpp">
       <Filter>src\controllers</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\controllers\UndoController.cpp">
+      <Filter>src\controllers</Filter>
+    </ClCompile>
     <ClCompile Include="..\Classes\managers\UndoManager.cpp">
       <Filter>src\managers</Filter>
     </ClCompile>
@@ -168,6 +171,9 @@
       <Filter>src\controllers</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\controllers\StackController.h">
+      <Filter>src\controllers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\controllers\UndoController.h">
       <Filter>src\controllers</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\managers\UndoManager.h">

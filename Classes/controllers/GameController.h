@@ -11,6 +11,7 @@
 #include "../managers/UndoManager.h"
 #include "PlayFieldController.h"
 #include "StackController.h"
+#include "UndoController.h"
 #include <memory>
 
 USING_NS_CC;
@@ -112,6 +113,12 @@ public:
     UndoManager* getUndoManager() const { return _undoManager; }
 
     /**
+     * 获取撤销控制器
+     * @return 撤销控制器
+     */
+    UndoController* getUndoController() const { return _undoController; }
+
+    /**
      * 执行撤销操作
      * @return 是否撤销成功
      */
@@ -174,40 +181,6 @@ protected:
     void handleGameLose();
 
     /**
-     * 执行撤销动画
-     * @param undoModel 撤销操作模型
-     */
-    void performUndoAnimation(std::shared_ptr<UndoModel> undoModel);
-
-    /**
-     * 执行桌面牌撤销动画
-     * @param undoModel 撤销操作模型
-     */
-    void performPlayfieldCardUndoAnimation(std::shared_ptr<UndoModel> undoModel);
-
-    /**
-     * 执行手牌堆撤销动画
-     * @param undoModel 撤销操作模型
-     */
-    void performStackCardUndoAnimation(std::shared_ptr<UndoModel> undoModel);
-
-    /**
-     * 恢复卡牌到桌面区域
-     * @param cardView 卡牌视图
-     * @param cardModel 卡牌模型
-     * @param absolutePos 绝对位置
-     */
-    void restoreCardToPlayfield(CardView* cardView, std::shared_ptr<CardModel> cardModel, const Vec2& absolutePos, int originalZOrder);
-
-    /**
-     * 恢复卡牌到手牌堆
-     * @param cardView 卡牌视图
-     * @param cardModel 卡牌模型
-     * @param absolutePos 绝对位置
-     */
-    void restoreCardToStack(CardView* cardView, std::shared_ptr<CardModel> cardModel, const Vec2& absolutePos);
-
-    /**
      * 更新底牌显示
      */
     void updateCurrentCardDisplay();
@@ -223,6 +196,7 @@ private:
     PlayFieldController* _playfieldController;          // 桌面牌控制器
     StackController* _stackController;                  // 手牌堆控制器
     UndoManager* _undoManager;                          // 撤销管理器
+    UndoController* _undoController;                    // 撤销控制器
 
     // 游戏状态
     int _currentLevelId;                                // 当前关卡ID
