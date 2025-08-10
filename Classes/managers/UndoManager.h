@@ -4,7 +4,7 @@
 #include "cocos2d.h"
 #include "../models/UndoModel.h"
 #include "../models/GameModel.h"
-#include "../configs/loaders/ConfigManager.h"
+#include "ConfigManager.h"
 #include <memory>
 #include <vector>
 #include <functional>

@@ -2,13 +2,13 @@
 #define __CONFIG_MANAGER_H__
 
 #include "cocos2d.h"
-#include "../models/UILayoutConfig.h"
-#include "../models/AnimationConfig.h"
-#include "../models/FontConfig.h"
-#include "../models/GameRulesConfig.h"
-#include "../models/CardLayoutConfig.h"
-#include "../models/DisplayConfig.h"
-#include "LevelConfigLoader.h"
+#include "../configs/models/UILayoutConfig.h"
+#include "../configs/models/AnimationConfig.h"
+#include "../configs/models/FontConfig.h"
+#include "../configs/models/GameRulesConfig.h"
+#include "../configs/models/CardLayoutConfig.h"
+#include "../configs/models/DisplayConfig.h"
+#include "../configs/loaders/LevelConfigLoader.h"
 #include <memory>
 
 USING_NS_CC;

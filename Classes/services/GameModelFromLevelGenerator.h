@@ -4,7 +4,7 @@
 #include "cocos2d.h"
 #include "../models/GameModel.h"
 #include "../configs/models/LevelConfig.h"
-#include "../configs/loaders/ConfigManager.h"
+#include "../managers/ConfigManager.h"
 #include <memory>
 
 USING_NS_CC;

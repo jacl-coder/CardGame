@@ -108,6 +108,9 @@
     <ClCompile Include="..\Classes\managers\UndoManager.cpp">
       <Filter>src\managers</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\managers\ConfigManager.cpp">
+      <Filter>src\managers</Filter>
+    </ClCompile>
     <ClCompile Include="..\Classes\services\GameModelFromLevelGenerator.cpp">
       <Filter>src\services</Filter>
     </ClCompile>
@@ -133,9 +136,6 @@
       <Filter>src\configs\models</Filter>
     </ClCompile>
     <ClCompile Include="..\Classes\configs\loaders\LevelConfigLoader.cpp">
-      <Filter>src\configs\loaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Classes\configs\loaders\ConfigManager.cpp">
       <Filter>src\configs\loaders</Filter>
     </ClCompile>
   </ItemGroup>
@@ -179,6 +179,9 @@
     <ClInclude Include="..\Classes\managers\UndoManager.h">
       <Filter>src\managers</Filter>
     </ClInclude>
+    <ClInclude Include="..\Classes\managers\ConfigManager.h">
+      <Filter>src\managers</Filter>
+    </ClInclude>
     <ClInclude Include="..\Classes\services\GameModelFromLevelGenerator.h">
       <Filter>src\services</Filter>
     </ClInclude>
@@ -204,9 +207,6 @@
       <Filter>src\configs\models</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\configs\loaders\LevelConfigLoader.h">
-      <Filter>src\configs\loaders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\configs\loaders\ConfigManager.h">
       <Filter>src\configs\loaders</Filter>
     </ClInclude>
   </ItemGroup>

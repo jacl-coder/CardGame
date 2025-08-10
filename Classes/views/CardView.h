@@ -3,7 +3,7 @@
 
 #include "cocos2d.h"
 #include "../models/CardModel.h"
-#include "../configs/loaders/ConfigManager.h"
+#include "../managers/ConfigManager.h"
 #include <functional>
 #include <memory>
 

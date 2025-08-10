@@ -24,7 +24,7 @@
 
 #include "AppDelegate.h"
 #include "GameScene.h"
-#include "configs/loaders/ConfigManager.h"
+#include "managers/ConfigManager.h"
 
 // #define USE_AUDIO_ENGINE 1
 // #define USE_SIMPLE_AUDIO_ENGINE 1

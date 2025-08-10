@@ -7,7 +7,7 @@
 #include "../models/UndoModel.h"
 #include "../views/CardView.h"
 #include "../managers/UndoManager.h"
-#include "../configs/loaders/ConfigManager.h"
+#include "../managers/ConfigManager.h"
 #include <memory>
 #include <vector>
 #include <functional>

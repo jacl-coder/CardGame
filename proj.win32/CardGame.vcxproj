@@ -162,6 +162,7 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)\Resources\" /D /E /I /F /Y
     <ClCompile Include="..\Classes\controllers\StackController.cpp" />
     <ClCompile Include="..\Classes\controllers\UndoController.cpp" />
     <ClCompile Include="..\Classes\managers\UndoManager.cpp" />
+    <ClCompile Include="..\Classes\managers\ConfigManager.cpp" />
     <ClCompile Include="..\Classes\services\GameModelFromLevelGenerator.cpp" />
     <ClCompile Include="..\Classes\configs\models\LevelConfig.cpp" />
     <ClCompile Include="..\Classes\configs\models\UILayoutConfig.cpp" />
@@ -171,7 +172,6 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)\Resources\" /D /E /I /F /Y
     <ClCompile Include="..\Classes\configs\models\CardLayoutConfig.cpp" />
     <ClCompile Include="..\Classes\configs\models\DisplayConfig.cpp" />
     <ClCompile Include="..\Classes\configs\loaders\LevelConfigLoader.cpp" />
-    <ClCompile Include="..\Classes\configs\loaders\ConfigManager.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -187,6 +187,7 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)\Resources\" /D /E /I /F /Y
     <ClInclude Include="..\Classes\controllers\StackController.h" />
     <ClInclude Include="..\Classes\controllers\UndoController.h" />
     <ClInclude Include="..\Classes\managers\UndoManager.h" />
+    <ClInclude Include="..\Classes\managers\ConfigManager.h" />
     <ClInclude Include="..\Classes\services\GameModelFromLevelGenerator.h" />
     <ClInclude Include="..\Classes\configs\models\LevelConfig.h" />
     <ClInclude Include="..\Classes\configs\models\UILayoutConfig.h" />
@@ -196,7 +197,6 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)\Resources\" /D /E /I /F /Y
     <ClInclude Include="..\Classes\configs\models\CardLayoutConfig.h" />
     <ClInclude Include="..\Classes\configs\models\DisplayConfig.h" />
     <ClInclude Include="..\Classes\configs\loaders\LevelConfigLoader.h" />
-    <ClInclude Include="..\Classes\configs\loaders\ConfigManager.h" />
     <ClInclude Include="main.h" />
   </ItemGroup>
   <ItemGroup>
